@@ -550,6 +550,20 @@ scene.add(rim);
 const env = new THREE.Group();
 scene.add(env);
 
+/* ---------- obstacle registry (collision) ----------
+   Every solid structure registers an axis-aligned bounding box here.
+   updatePhysics resolves the drone (as a sphere) against these so the
+   aircraft can no longer fly through pillars. Obstacles whose mesh is
+   hidden by the current lesson are skipped. */
+const obstacles = [];
+function registerObstacle(mesh, w, h, d, name){
+  obstacles.push({
+    mesh, name,
+    min: new THREE.Vector3(mesh.position.x - w/2, mesh.position.y - h/2, mesh.position.z - d/2),
+    max: new THREE.Vector3(mesh.position.x + w/2, mesh.position.y + h/2, mesh.position.z + d/2),
+  });
+}
+
 // ground
 const groundMat = new THREE.MeshStandardMaterial({color:0x12161d, roughness:0.95, metalness:0.0});
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(300,300), groundMat);
@@ -593,6 +607,8 @@ const tbeacon=new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16),
   new THREE.MeshStandardMaterial({color:0xff5566,emissive:0xff2233,emissiveIntensity:1.2}));
 tbeacon.position.set(-16,8.6,-10); tower.add(tbeacon);
 env.add(tower);
+registerObstacle(tbase, 2, 8, 2, "the training tower");
+registerObstacle(ttop, 3, 0.5, 3, "the tower platform");
 
 // target rings (pitch lesson) along -Z
 const ringObjs=[];
@@ -615,7 +631,9 @@ const coneObjs=[];
 function makeCone(x,z){
   const c=new THREE.Mesh(new THREE.ConeGeometry(0.45,1.2,16),
     new THREE.MeshStandardMaterial({color:0xffb547, emissive:0x3a2603, emissiveIntensity:0.5, roughness:0.5}));
-  c.position.set(x,0.6,z); c.castShadow=true; env.add(c); coneObjs.push(c); return c;
+  c.position.set(x,0.6,z); c.castShadow=true; env.add(c); coneObjs.push(c);
+  registerObstacle(c, 0.9, 1.2, 0.9, "a marker cone");
+  return c;
 }
 makeCone(8,-2); makeCone(8,2); makeCone(13,-2); makeCone(13,2);
 
@@ -627,7 +645,9 @@ function makeYawMarker(angleDeg,color){
     new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.25, roughness:0.5}));
   m.position.set(Math.sin(a)*r,1.6,-Math.cos(a)*r); m.castShadow=true;
   m.userData={angle:angleDeg, hit:false, baseColor:color};
-  env.add(m); yawMarkers.push(m); return m;
+  env.add(m); yawMarkers.push(m);
+  registerObstacle(m, 1.2, 3, 0.3, "a target marker");
+  return m;
 }
 makeYawMarker(0,0x3fa9ff); makeYawMarker(90,0x54e08a); makeYawMarker(180,0xffb547); makeYawMarker(270,0xff5566);
 
@@ -638,6 +658,8 @@ for(let i=0;i<7;i++){
   const a=Math.random()*Math.PI*2, r=24+Math.random()*16;
   b.position.set(Math.sin(a)*r, b.geometry.parameters.height/2, Math.cos(a)*r);
   b.castShadow=true;b.receiveShadow=true;env.add(b);
+  const gp=b.geometry.parameters;
+  registerObstacle(b, gp.width, gp.height, gp.depth, "a structure");
 }
 
 /* ====================== DRONE MODEL ====================== */
@@ -846,6 +868,9 @@ function updatePhysics(dt){
     state.vel.x*=0.2; state.vel.z*=0.2;
   }
 
+  // obstacle collisions (pillars, tower, cones, markers are solid)
+  resolveCollisions(dt);
+
   // ground / landing
   if(state.pos.y <= GROUND_Y){
     const impact = state.vel.y;
@@ -868,6 +893,57 @@ function updatePhysics(dt){
   // apply to model
   drone.position.copy(state.pos);
   drone.rotation.set(state.pitch, state.heading, -state.roll, "YXZ");
+}
+
+/* ---------- obstacle collision resolution ---------- */
+const DRONE_RADIUS = 0.9;          // effective body+prop radius
+let collideCooldown = 0;           // rate-limits the crash feedback, not the physics
+function resolveCollisions(dt){
+  collideCooldown = Math.max(0, collideCooldown - dt);
+  for(const ob of obstacles){
+    if(ob.mesh && !ob.mesh.visible) continue;   // hidden by current lesson
+    // closest point on the AABB to the drone centre
+    const cx = clamp(state.pos.x, ob.min.x, ob.max.x);
+    const cy = clamp(state.pos.y, ob.min.y, ob.max.y);
+    const cz = clamp(state.pos.z, ob.min.z, ob.max.z);
+    let dx = state.pos.x - cx, dy = state.pos.y - cy, dz = state.pos.z - cz;
+    const d2 = dx*dx + dy*dy + dz*dz;
+    if(d2 >= DRONE_RADIUS*DRONE_RADIUS) continue;
+    // contact normal: from surface point toward drone; if the centre is
+    // inside the box, push out along the axis of least penetration
+    let d = Math.sqrt(d2), nx, ny, nz;
+    if(d > 1e-4){ nx = dx/d; ny = dy/d; nz = dz/d; }
+    else {
+      const pens = [
+        [state.pos.x - ob.min.x, -1, 0, 0], [ob.max.x - state.pos.x, 1, 0, 0],
+        [state.pos.y - ob.min.y, 0, -1, 0], [ob.max.y - state.pos.y, 0, 1, 0],
+        [state.pos.z - ob.min.z, 0, 0, -1], [ob.max.z - state.pos.z, 0, 0, 1],
+      ].sort((a,b)=>a[0]-b[0])[0];
+      nx = pens[1]; ny = pens[2]; nz = pens[3];
+      d = 0;
+    }
+    // push the drone out to the surface
+    const push = DRONE_RADIUS - d;
+    state.pos.x += nx*push; state.pos.y += ny*push; state.pos.z += nz*push;
+    // reflect the inward velocity component with a soft bounce, then damp
+    const vDot = state.vel.x*nx + state.vel.y*ny + state.vel.z*nz;
+    if(vDot < 0){
+      state.vel.x -= 1.35*vDot*nx;
+      state.vel.y -= 1.35*vDot*ny;
+      state.vel.z -= 1.35*vDot*nz;
+    }
+    state.vel.multiplyScalar(0.6);
+    // instructional + scoring feedback (rate-limited)
+    if(collideCooldown <= 0){
+      collideCooldown = 1.5;
+      state.smoothness = clamp(state.smoothness - 10, 0, 100);
+      track.collisions = (track.collisions||0) + 1;
+      Audio.land(true);   // crash thud
+      Audio.warn("crit");
+      pushFeed("⚠ Collision with "+ob.name,
+        "You struck an obstacle. On real hardware this means bent props, a cracked arm, or a fly-away. Give structures a wide berth and approach slowly — stability score −10.","warn");
+    }
+  }
 }
 
 /* ---------- avionics update ---------- */
@@ -1142,7 +1218,9 @@ function checkObjectives(){
 function lessonComplete(grade){
   const letter = grade>90?"A — Smooth & precise":grade>75?"B — Solid control":grade>60?"C — Keep practising inputs":"D — Work on smoothness";
   const t=document.getElementById("toast");
-  document.getElementById("toast-msg").textContent="You completed "+current.title+". "+(state.hardLanding?"Watch those firm landings next time.":"Controlled and stable throughout.");
+  document.getElementById("toast-msg").textContent="You completed "+current.title+". "+
+    (track.collisions>0 ? "You struck "+track.collisions+" obstacle"+(track.collisions>1?"s":"")+" — give structures more clearance." :
+     state.hardLanding ? "Watch those firm landings next time." : "Controlled and stable throughout.");
   document.getElementById("toast-grade").textContent="Stability score "+grade+"/100   ·   "+letter;
   t.classList.add("show");
   Audio.success(); successFlash();
@@ -1337,6 +1415,7 @@ function resetDrone(keepLesson){
   // reset trackers
   track.maxAlt=0; track.maxHome=0; track.maxYawTravel=0; track.startHeading=0;
   track.sawLowSignal=false; track.sawLowBatt=false; track.sawRTH=false;
+  track.collisions=0; collideCooldown=0;
   // reset props
   ringObjs.forEach(r=>{r.userData.passed=false;r.userData.ring.material.color.setHex(0x36e0c8);r.userData.ring.material.emissive.setHex(0x0d3b34);});
   yawMarkers.forEach(m=>{m.userData.hit=false;m.material.emissive.setHex(m.userData.baseColor);m.material.emissiveIntensity=0.25;});

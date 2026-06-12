@@ -40,6 +40,7 @@ npx serve .
 | Controller support | Gamepad auto-detected; analog sticks map to a real transmitter layout, keyboard always works |
 | Premium feel | Boot/arming sequence, hover bob, rotor wash, rim lighting, animated objective completions |
 | Comfort & access | Mute, volume, reduced-motion toggle, replayable onboarding, full keyboard help — preferences persist |
+| Collision realism | The tower, pillars, cones and markers are solid — strikes bounce the aircraft, cost stability score, and explain the real-world damage |
 
 ---
 
