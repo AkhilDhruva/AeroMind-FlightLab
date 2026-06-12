@@ -165,91 +165,6 @@
   #toast .small{font-size:12.5px;color:var(--muted);margin-top:8px;max-width:320px;line-height:1.5}
   #toast .grade{font-family:var(--mono);font-size:13px;color:var(--text);margin-top:10px}
 
-  /* ---------- feed emphasis: newest bright, older dimmed ---------- */
-  #feed .fitem{opacity:.55;transition:opacity .3s}
-  #feed .fitem:last-child{opacity:1}
-  .fitem .rep{font-family:var(--mono);font-size:9px;color:var(--faint);margin-left:6px}
-
-  /* ---------- objective complete pulse ---------- */
-  @keyframes objpop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
-  .obj.justdone{animation:objpop .5s ease}
-  .obj.justdone .box{box-shadow:0 0 0 0 rgba(84,224,138,.6);animation:boxflash .6s ease}
-  @keyframes boxflash{0%{box-shadow:0 0 0 0 rgba(84,224,138,.55)}100%{box-shadow:0 0 0 12px rgba(84,224,138,0)}}
-
-  /* ---------- success flash (objective / lesson) ---------- */
-  #flash{position:fixed;inset:0;z-index:25;pointer-events:none;opacity:0;
-    background:radial-gradient(700px 400px at 75% 35%,rgba(84,224,138,.16),transparent 70%)}
-  #flash.go{animation:flash .7s ease}
-  @keyframes flash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
-
-  /* ---------- boot / arming sequence ---------- */
-  #boot{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:radial-gradient(1000px 560px at 50% 42%,rgba(16,34,60,.7),rgba(5,8,12,.985));text-align:center;cursor:pointer}
-  #boot .bdg{font-family:var(--mono);font-size:11px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;margin-bottom:24px}
-  #boot .bootline{font-family:var(--mono);font-size:15px;color:var(--text);min-height:26px;letter-spacing:1px}
-  #boot .bootlist{margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--faint);line-height:1.9;text-align:left;min-width:240px}
-  #boot .bootlist div{opacity:.25;transition:.3s}
-  #boot .bootlist div.done{opacity:1;color:var(--green)}
-  #boot .bootlist div.done::before{content:"✓ ";color:var(--green)}
-  #boot .bar{margin-top:26px;width:260px;height:4px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
-  #boot .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .25s}
-  #boot .skip{margin-top:22px;font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:1px}
-
-  /* ---------- top-right tool buttons (settings / help / mute) ---------- */
-  #tools{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:14}
-  .toolbtn{pointer-events:auto;cursor:pointer;width:38px;height:38px;border-radius:10px;border:1px solid var(--stroke);
-    background:var(--panel);backdrop-filter:blur(10px);color:var(--muted);font-size:16px;display:flex;align-items:center;justify-content:center;transition:.14s}
-  .toolbtn:hover{border-color:var(--blue);color:var(--blue)}
-  .toolbtn.alert{border-color:var(--amber);color:var(--amber)}
-  #right-panel{top:62px}
-
-  /* ---------- overlay panels (settings / help) ---------- */
-  .overlay{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;
-    background:rgba(5,8,13,.62);backdrop-filter:blur(3px)}
-  .overlay.show{display:flex;animation:fin .2s ease}
-  .sheet{width:min(440px,92vw);max-height:88vh;overflow-y:auto;background:var(--panel-solid);border:1px solid var(--stroke-strong);
-    border-radius:16px;padding:22px 24px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
-  .sheet h2{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px}
-  .sheet .sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
-  .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--stroke);font-size:13px}
-  .srow .lbl{color:var(--text)}.srow .lbl small{display:block;color:var(--faint);font-size:11px;margin-top:2px}
-  .srow .stat{font-family:var(--mono);font-size:11px;color:var(--muted)}
-  .toggle{position:relative;width:44px;height:24px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid var(--stroke-strong);cursor:pointer;flex:0 0 auto;transition:.16s}
-  .toggle::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.16s}
-  .toggle.on{background:rgba(54,224,200,.3);border-color:var(--cyan)}
-  .toggle.on::after{left:22px;background:var(--cyan)}
-  input[type=range]{width:130px;accent-color:var(--cyan)}
-  .kbd{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-  .kbd div{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--stroke);border-radius:7px;padding:6px 8px}
-  .kbd b{color:var(--blue)}
-  .sheet .close{margin-top:18px;width:100%;text-align:center}
-
-  /* ---------- controller cue toast (bottom-left) ---------- */
-  #ctrl-cue{position:absolute;left:14px;bottom:58px;max-width:280px;z-index:13;pointer-events:auto;
-    display:none;align-items:flex-start;gap:10px;background:var(--panel-solid);border:1px solid var(--stroke-strong);
-    border-radius:12px;padding:12px 14px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
-  #ctrl-cue.show{display:flex;animation:cueIn .35s ease}
-  @keyframes cueIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  #ctrl-cue.ok{border-color:var(--green)}
-  #ctrl-cue .ico{font-size:20px;line-height:1;color:var(--cyan)}
-  #ctrl-cue.ok .ico{color:var(--green)}
-  #ctrl-cue .txt{font-size:12px;color:var(--muted);line-height:1.45}
-  #ctrl-cue .txt b{color:var(--text);display:block;margin-bottom:2px}
-  #ctrl-cue .x{cursor:pointer;color:var(--faint);font-size:14px;margin-left:2px}
-  #ctrl-cue .x:hover{color:var(--text)}
-
-  /* ---------- onboarding ---------- */
-  #onboard .sheet{width:min(480px,92vw)}
-  #onboard .goal{background:rgba(40,90,150,.14);border:1px solid var(--stroke);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--muted);line-height:1.55;margin:6px 0 12px}
-  #onboard .goal b{color:var(--cyan)}
-
-  /* reduced-motion: kill non-essential animation */
-  .reduce-motion .warnpill,.reduce-motion #toast,.reduce-motion .fitem,
-  .reduce-motion .obj.justdone,.reduce-motion #ctrl-cue.show,.reduce-motion #flash.go{animation:none !important}
-  @media (prefers-reduced-motion: reduce){
-    .warnpill,.fitem{animation:none !important}
-  }
-
   @media (max-width:980px){
     #left-panel{transform:none;top:auto;bottom:150px;left:10px;width:170px}
     #right-panel{width:230px}
@@ -357,93 +272,9 @@
     <div id="lesson-nav"></div>
   </div>
 
-  <!-- top-right tools -->
-  <div id="tools">
-    <div class="toolbtn" id="mute-btn" title="Mute / unmute (M)">🔊</div>
-    <div class="toolbtn" id="help-btn" title="Controls & help (?)">?</div>
-    <div class="toolbtn" id="settings-btn" title="Settings (P)">⚙</div>
-  </div>
-
-  <!-- controller recommendation / status cue -->
-  <div id="ctrl-cue">
-    <div class="ico">🎮</div>
-    <div class="txt" id="ctrl-cue-txt"><b>Tip: Connect a controller</b>A gamepad gives smoother, more realistic flight than the keyboard.</div>
-    <div class="x" id="ctrl-cue-x">✕</div>
-  </div>
-
   <div id="cam-hint">CAM: CHASE  ·  press C</div>
   <div id="anatomy-tip"></div>
   <div id="toast"><div class="big">Lesson Complete</div><div class="small" id="toast-msg"></div><div class="grade" id="toast-grade"></div></div>
-</div>
-
-<!-- success flash -->
-<div id="flash"></div>
-
-<!-- boot / arming sequence -->
-<div id="boot" class="hidden">
-  <div class="bdg">AeroMind Flight Systems</div>
-  <div class="bootline" id="boot-line">Powering systems…</div>
-  <div class="bootlist" id="boot-list"></div>
-  <div class="bar"><i id="boot-bar"></i></div>
-  <div class="skip">click anywhere to skip</div>
-</div>
-
-<!-- settings overlay -->
-<div class="overlay" id="settings">
-  <div class="sheet">
-    <h2>Settings</h2>
-    <div class="sub">Comfort and audio preferences. These persist on this device.</div>
-    <div class="srow"><div class="lbl">Sound<small>Motor, alerts &amp; UI feedback</small></div><div class="toggle on" id="tg-sound"></div></div>
-    <div class="srow"><div class="lbl">Volume</div><input type="range" id="vol" min="0" max="100" value="70"></div>
-    <div class="srow"><div class="lbl">Reduced motion<small>Calms UI animation &amp; drone bob</small></div><div class="toggle" id="tg-motion"></div></div>
-    <div class="srow"><div class="lbl">Controller<small>Plug in a gamepad to fly</small></div><div class="stat" id="ctrl-status">Not detected</div></div>
-    <div class="srow"><div class="lbl">Camera<small>Cycle with C</small></div><div class="stat" id="cam-status">Chase</div></div>
-    <div class="srow"><div class="lbl">Onboarding</div><div class="btn" id="replay-onboard" style="padding:7px 12px;font-size:11px">Replay tips</div></div>
-    <div class="btn primary close" id="settings-close">Done</div>
-  </div>
-</div>
-
-<!-- help overlay -->
-<div class="overlay" id="help">
-  <div class="sheet">
-    <h2>Controls &amp; Help</h2>
-    <div class="sub">Keyboard or gamepad — both work, and the controller maps to a real transmitter layout.</div>
-    <div class="kbd">
-      <div><b>W / S</b> Pitch fwd / back</div>
-      <div><b>A / D</b> Roll left / right</div>
-      <div><b>Q / E</b> Yaw left / right</div>
-      <div><b>Space / Shift</b> Throttle up / down</div>
-      <div><b>H</b> Stabilize / manual</div>
-      <div><b>C</b> Camera mode</div>
-      <div><b>R</b> Reset to pad</div>
-      <div><b>M</b> Mute · <b>?</b> Help</div>
-    </div>
-    <div class="sub" style="margin-top:16px">
-      <b style="color:var(--cyan)">Gamepad:</b> Left stick = throttle (up/down) &amp; yaw (left/right). Right stick = pitch &amp; roll. Face buttons reset / cycle camera / toggle mode.
-    </div>
-    <div class="sub">
-      <b style="color:var(--amber)">Telemetry:</b> Scan the top strip — battery, GPS satellites, signal %, heading, altitude, wind. Low battery or lost signal triggers automatic Return-to-Home back to the launch pad.
-    </div>
-    <div class="btn primary close" id="help-close">Got it</div>
-  </div>
-</div>
-
-<!-- first-flight onboarding -->
-<div class="overlay" id="onboard">
-  <div class="sheet">
-    <h2 id="ob-title">Before your first flight</h2>
-    <div class="goal" id="ob-goal"></div>
-    <div class="sub" style="margin-top:0">
-      You're flying in <b style="color:var(--cyan)">Stabilised</b> mode: release the sticks and the aircraft auto-levels and holds altitude — forgiving, like a real beginner drone. Smoothness is scored, not speed.
-    </div>
-    <div class="kbd">
-      <div><b>W/S</b> Pitch · <b>A/D</b> Roll</div>
-      <div><b>Q/E</b> Yaw · <b>Spc/Shf</b> Throttle</div>
-    </div>
-    <div class="sub" style="margin-top:14px">A controller is supported and recommended — plug one in any time. Press <b>?</b> for full help.</div>
-    <div class="srow" style="border:none;padding-bottom:0"><label class="lbl" style="font-size:12px;color:var(--muted);cursor:pointer"><input type="checkbox" id="ob-skip" style="accent-color:var(--cyan);margin-right:6px">Don't show this again</label></div>
-    <div class="btn primary close" id="onboard-go">Begin training ▶</div>
-  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -506,13 +337,6 @@ const MAX_YAWRATE = 1.6; // rad/s
 
 const keys = {};
 const keyEdges = {};     // freshly pressed this frame
-
-/* Unified analog control axes (keyboard + gamepad merged each frame).
-   Every downstream system — physics, stick viz, explanation feed — reads
-   from INPUT so keyboard and controller behave identically. */
-const INPUT = { pitch:0, roll:0, yaw:0, thr:0 };
-const prevInput = { pitch:0, roll:0, yaw:0, thr:0 };
-const gpad = { connected:false, index:-1, id:"" };
 
 /* ====================== THREE SETUP ====================== */
 const canvas = document.getElementById("scene-canvas");
@@ -743,50 +567,15 @@ window.addEventListener("keyup",(e)=>{
   keys[k]=false;
 });
 
-/* ---------- gamepad connection ---------- */
-window.addEventListener("gamepadconnected",(e)=>{
-  gpad.connected=true; gpad.index=e.gamepad.index; gpad.id=e.gamepad.id;
-  onControllerConnected(e.gamepad.id);
-});
-window.addEventListener("gamepaddisconnected",(e)=>{
-  if(e.gamepad.index===gpad.index){ gpad.connected=false; gpad.index=-1; updateControllerStatus(); }
-});
-
-/* ---------- merge keyboard + gamepad into INPUT each frame ---------- */
-function computeInput(){
-  // keyboard (digital)
-  let p=(keys.W?1:0)-(keys.S?1:0);
-  let r=(keys.D?1:0)-(keys.A?1:0);
-  let y=(keys.E?1:0)-(keys.Q?1:0);
-  let t=(keys.Space?1:0)-(keys.Shift?1:0);
-  // gamepad (analog, additive) — left stick: throttle(Y)/yaw(X), right stick: pitch(Y)/roll(X)
-  if(gpad.connected && navigator.getGamepads){
-    const gp=navigator.getGamepads()[gpad.index];
-    if(gp){
-      const dz=v=>Math.abs(v)<0.14?0:v;
-      const lx=dz(gp.axes[0]||0), ly=dz(gp.axes[1]||0);
-      const rx=dz(gp.axes[2]||0), ry=dz(gp.axes[3]||0);
-      t += -ly; y += lx; p += -ry; r += rx;
-      // optional triggers as fine throttle (buttons 6/7) when present
-      if(gp.buttons[7]) t += gp.buttons[7].value; if(gp.buttons[6]) t -= gp.buttons[6].value;
-    }
-  }
-  prevInput.pitch=INPUT.pitch; prevInput.roll=INPUT.roll; prevInput.yaw=INPUT.yaw; prevInput.thr=INPUT.thr;
-  INPUT.pitch=clamp(p,-1,1); INPUT.roll=clamp(r,-1,1); INPUT.yaw=clamp(y,-1,1); INPUT.thr=clamp(t,-1,1);
-}
-
 /* ====================== PHYSICS ====================== */
 function updatePhysics(dt){
   if(!state.powered) return;
 
-  // ---- rotational input (analog: keyboard=±1, gamepad=continuous) ----
-  // during automatic Return-to-Home the pilot's sticks are ignored so the
-  // failsafe can fly the aircraft home uncontested.
-  const pilot = state.rthActive ? {pitch:0,roll:0,yaw:0,thr:0} : INPUT;
-  const pitchIn = pilot.pitch;   // +1 forward
-  const rollIn  = pilot.roll;    // +1 right
-  const yawIn   = pilot.yaw;     // +1 clockwise
-  const thrIn   = pilot.thr;
+  // ---- rotational input ----
+  const pitchIn = (keys.W?1:0) - (keys.S?1:0);   // +1 forward
+  const rollIn  = (keys.D?1:0) - (keys.A?1:0);   // +1 right
+  const yawIn   = (keys.E?1:0) - (keys.Q?1:0);   // +1 clockwise
+  const thrIn   = (keys.Space?1:0) - (keys.Shift?1:0);
 
   // smoothed tilt toward input target
   const tgtPitch = pitchIn * MAX_TILT;
@@ -849,11 +638,9 @@ function updatePhysics(dt){
   // ground / landing
   if(state.pos.y <= GROUND_Y){
     const impact = state.vel.y;
-    const wasAirborne = !state.landed;
     state.pos.y = GROUND_Y;
     if(impact < -2.2){ state.hardLanding=true; state.smoothness=clamp(state.smoothness-12,0,100);
       pushFeed("Hard landing detected","Descent rate was too high at touchdown. On real hardware this risks bent arms or a cracked frame. Ease throttle near the ground.","warn"); }
-    if(wasAirborne && impact<-0.25) Audio.land(impact<-2.2);   // touchdown thud (scales with impact)
     state.vel.y=0; state.landed=true;
   } else { state.landed=false; }
 
@@ -939,7 +726,7 @@ function runRTH(dt){
 const camModes=["CHASE","ORBIT","TOP"];
 let camMode=0;
 let orbitAngle=0;
-function cycleCamera(){ camMode=(camMode+1)%camModes.length; document.getElementById("cam-hint").textContent="CAM: "+camModes[camMode]+"  ·  press C"; if(typeof updateCamStatus==="function")updateCamStatus(); if(typeof Audio==="object")Audio.click(); }
+function cycleCamera(){ camMode=(camMode+1)%camModes.length; document.getElementById("cam-hint").textContent="CAM: "+camModes[camMode]+"  ·  press C"; }
 function updateCamera(dt){
   const tgt=state.pos;
   let desired=new THREE.Vector3();
@@ -985,8 +772,6 @@ function updateVisuals(dt){
 
   // ring pulse
   ringObjs.forEach(r=>{ if(!r.userData.passed){ r.userData.halo.material.opacity=0.12+Math.abs(Math.sin(blinkT*2))*0.12; } });
-
-  dronePolish(dt);   // hover bob, rim glow, rotor wash
 }
 
 /* ====================== LESSONS ====================== */
@@ -1123,9 +908,7 @@ function checkObjectives(){
     if(!current._done[i] && o.chk(track)){
       current._done[i]=true;
       const el=document.getElementById("obj-"+i);
-      if(el){el.classList.add("done"); el.classList.add("justdone"); el.querySelector(".box").textContent="✓";
-        setTimeout(()=>el.classList.remove("justdone"),600);}
-      Audio.objective();
+      if(el){el.classList.add("done"); el.querySelector(".box").textContent="✓";}
       pushFeed("Objective complete","“"+o.t+"” — nicely done.","good");
     }
     if(current._done[i]) done++;
@@ -1145,7 +928,6 @@ function lessonComplete(grade){
   document.getElementById("toast-msg").textContent="You completed "+current.title+". "+(state.hardLanding?"Watch those firm landings next time.":"Controlled and stable throughout.");
   document.getElementById("toast-grade").textContent="Stability score "+grade+"/100   ·   "+letter;
   t.classList.add("show");
-  Audio.success(); successFlash();
   setTimeout(()=>t.classList.remove("show"), 4200);
   pushFeed("✔ Lesson complete: "+current.title, "Stability score "+grade+"/100. "+letter+".","good");
 }
@@ -1154,20 +936,8 @@ function lessonComplete(grade){
 const feedEl=document.getElementById("feed");
 let feedCount=0;
 function pushFeed(title, body, cls){
-  // collapse consecutive duplicates into a "×N" counter to keep the feed calm
-  const last=feedEl.lastElementChild;
-  if(last && last.dataset.title===title){
-    let rep=(parseInt(last.dataset.rep||"1",10))+1;
-    last.dataset.rep=rep;
-    let badge=last.querySelector(".rep");
-    if(!badge){ badge=document.createElement("span"); badge.className="rep"; last.appendChild(badge); }
-    badge.textContent="×"+rep;
-    feedEl.scrollTop=feedEl.scrollHeight;
-    return;
-  }
   const d=document.createElement("div");
   d.className="fitem"+(cls?(" "+cls):"");
-  d.dataset.title=title;
   d.innerHTML="<b>"+title+"</b> "+(body||"");
   feedEl.appendChild(d);
   while(feedEl.children.length>14) feedEl.removeChild(feedEl.firstChild);
@@ -1187,16 +957,10 @@ const explain = {
   Space:["Throttle increased","All four rotors spin faster together → more <b>lift</b> → the drone climbs. Battery drains faster under throttle."],
   Shift:["Throttle reduced","Rotor speed drops, lift falls below weight, and the drone descends. Ease off near the ground for a soft landing."],
 };
-// fire an explanation when an axis crosses the ±0.5 threshold (rising edge),
-// so a controller stick teaches exactly like a key press.
-const TH=0.5;
-function crossed(now,prev){ return Math.abs(now)>=TH && Math.abs(prev)<TH; }
 function updateFeed(){
-  if(!state.powered) return;
-  if(crossed(INPUT.pitch,prevInput.pitch)) pushFeed(...explain[INPUT.pitch>0?"W":"S"]);
-  if(crossed(INPUT.roll ,prevInput.roll )) pushFeed(...explain[INPUT.roll >0?"D":"A"]);
-  if(crossed(INPUT.yaw  ,prevInput.yaw  )) pushFeed(...explain[INPUT.yaw  >0?"E":"Q"]);
-  if(crossed(INPUT.thr  ,prevInput.thr  )) pushFeed(...explain[INPUT.thr  >0?"Space":"Shift"]);
+  for(const k in explain){
+    if(keyEdges[k]){ pushFeed(explain[k][0], explain[k][1]); }
+  }
 }
 
 /* ====================== TELEMETRY UI ====================== */
@@ -1227,14 +991,13 @@ function updateHUD(){
   // compass ribbon
   buildCompass(hdg);
 
-  // controller sticks — driven by merged analog input (keyboard or gamepad)
-  posStick("stick-left",  INPUT.yaw,  INPUT.thr);
-  posStick("stick-right", INPUT.roll, INPUT.pitch);
-  // keycap highlight reflects the active analog direction on each channel
-  const lit=(axis,sign)=> (sign>0 ? INPUT[axis]>0.25 : INPUT[axis]<-0.25);
-  [["k-W","pitch",1],["k-S","pitch",-1],["k-D","roll",1],["k-A","roll",-1],
-   ["k-E","yaw",1],["k-Q","yaw",-1],["k-Space","thr",1],["k-Shift","thr",-1]]
-    .forEach(([id,axis,sign])=>{ $(id).classList.toggle("on", lit(axis,sign)); });
+  // controller sticks
+  const lx=((keys.E?1:0)-(keys.Q?1:0)); const ly=((keys.Space?1:0)-(keys.Shift?1:0));
+  const rx=((keys.D?1:0)-(keys.A?1:0)); const ry=((keys.W?1:0)-(keys.S?1:0));
+  posStick("stick-left", lx, ly);
+  posStick("stick-right", rx, ry);
+  [["W","k-W"],["S","k-S"],["A","k-A"],["D","k-D"],["Q","k-Q"],["E","k-E"],["Space","k-Space"],["Shift","k-Shift"]]
+    .forEach(([k,id])=>{ $(id).classList.toggle("on", !!keys[k]); });
 
   // warnings
   updateWarnings();
@@ -1307,7 +1070,6 @@ function updateTrackers(dt){
       r.userData.passed=true;
       r.userData.ring.material.color.setHex(0x54e08a);
       r.userData.ring.material.emissive.setHex(0x1c5d2e);
-      Audio.ring();
       pushFeed("Ring cleared","Clean pass — you held altitude and centred the aircraft while moving forward. That's coordinated pitch control.","good");
     }
   });
@@ -1319,7 +1081,6 @@ function updateTrackers(dt){
     if(diff<12){
       m.userData.hit=true;
       m.material.emissive.setHex(0xffffff); m.material.emissiveIntensity=0.8;
-      Audio.ring();
       pushFeed("Marker aligned","Nose is pointed at the target. Yaw changed your <b>facing</b> — your position stayed put.","good");
     }
   });
@@ -1327,7 +1088,6 @@ function updateTrackers(dt){
 
 /* ====================== CONTROL ACTIONS ====================== */
 function resetDrone(keepLesson){
-  if(typeof Audio==="object"&&Audio.resetWarnings) Audio.resetWarnings();
   state.pos.set(0,GROUND_Y,0); state.vel.set(0,0,0);
   state.heading=0; state.yawRate=0; state.pitch=0; state.roll=0;
   state.climbInput=0; state.battery=100; state.gps=12; state.signal=100;
@@ -1350,7 +1110,6 @@ function resetDrone(keepLesson){
 }
 function toggleHover(){
   state.hover=!state.hover;
-  Audio.click();
   pushFeed(state.hover?"Stabilization ON":"Manual mode (stabilization OFF)",
     state.hover?"The flight controller auto-levels and holds altitude when you release the sticks. Beginner-friendly.":
     "You now manage lift directly — the aircraft will sink without throttle, like an experienced pilot's rate mode.",
@@ -1415,288 +1174,26 @@ function buildNav(){
   lessons.forEach(les=>{
     const b=document.createElement("div");
     b.className="lbtn"+(les.scn?" scn":""); b.textContent=les.name; b.dataset.id=les.id;
-    b.onclick=()=>{ Audio.init(); Audio.click(); anatomyMode=false; tip.style.display="none";
-      const wasPowered=state.powered; state.powered=true; if(camMode===1)camMode=0; loadLesson(les);
-      if(!wasPowered) Audio.arm();
-      document.getElementById("cam-hint").textContent="CAM: "+camModes[camMode]+"  ·  press C"; updateCamStatus(); };
+    b.onclick=()=>{ anatomyMode=false; tip.style.display="none"; state.powered=true; if(camMode===1)camMode=0; loadLesson(les); document.getElementById("cam-hint").textContent="CAM: "+camModes[camMode]+"  ·  press C"; };
     nav.appendChild(b);
   });
 }
 buildNav();
 
-document.getElementById("launch-btn").onclick=()=>{ startSession(lessons[0]); };
-document.getElementById("anatomy-btn").onclick=()=>{ Audio.init(); enterAnatomy(); };
-
-/* ====================== AUDIO ENGINE ======================
-   Procedural Web Audio — no external assets. A continuous motor bed whose
-   pitch/level track throttle, plus one-shot cues (arm, land, ring, chime,
-   warnings, UI clicks). Created lazily after the first user gesture so the
-   browser's autoplay policy is respected; degrades silently if unavailable. */
-const Audio = (function(){
-  let ctx=null, master=null, motorGain=null, oscA=null, oscB=null, motorFilter=null, subGain=null, sub=null;
-  let enabled=true, volume=0.7, running=false, started=false;
-  let warned={lowBatt:false,critBatt:false,lowSig:false,rth:false,wind:false};
-
-  function ensure(){
-    if(ctx || !enabled) return ctx;
-    try{
-      const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null;
-      ctx=new AC();
-      master=ctx.createGain(); master.gain.value=volume; master.connect(ctx.destination);
-    }catch(e){ ctx=null; }
-    return ctx;
-  }
-  function blip(freq,dur,type,gain,gnode){
-    if(!ensure()||!enabled) return;
-    const o=ctx.createOscillator(), g=ctx.createGain();
-    o.type=type||"sine"; o.frequency.value=freq;
-    g.gain.value=0; o.connect(g); g.connect(gnode||master);
-    const t=ctx.currentTime;
-    g.gain.linearRampToValueAtTime((gain==null?0.25:gain),t+0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-    o.start(t); o.stop(t+dur+0.02);
-  }
-  function noise(dur,gain,cut){
-    if(!ensure()||!enabled) return;
-    const n=Math.floor(ctx.sampleRate*dur), buf=ctx.createBuffer(1,n,ctx.sampleRate), d=buf.getChannelData(0);
-    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
-    const src=ctx.createBufferSource(); src.buffer=buf;
-    const f=ctx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=cut||900;
-    const g=ctx.createGain(); g.gain.value=gain==null?0.3:gain;
-    src.connect(f); f.connect(g); g.connect(master); src.start();
-  }
-
-  function startMotor(){
-    if(!ensure()||!enabled||running) return;
-    motorFilter=ctx.createBiquadFilter(); motorFilter.type="lowpass"; motorFilter.frequency.value=520;
-    motorGain=ctx.createGain(); motorGain.gain.value=0;
-    motorFilter.connect(motorGain); motorGain.connect(master);
-    oscA=ctx.createOscillator(); oscA.type="sawtooth"; oscA.frequency.value=70;
-    oscB=ctx.createOscillator(); oscB.type="sawtooth"; oscB.frequency.value=70*1.5; oscB.detune.value=8;
-    sub=ctx.createOscillator(); sub.type="sine"; sub.frequency.value=44;
-    subGain=ctx.createGain(); subGain.gain.value=0.18; sub.connect(subGain); subGain.connect(motorGain);
-    oscA.connect(motorFilter); oscB.connect(motorFilter);
-    oscA.start(); oscB.start(); sub.start(); running=true;
-  }
-  function stopMotor(){
-    if(!running) return;
-    try{ const t=ctx.currentTime; motorGain.gain.cancelScheduledValues(t); motorGain.gain.linearRampToValueAtTime(0,t+0.25);
-      oscA.stop(t+0.3); oscB.stop(t+0.3); sub.stop(t+0.3); }catch(e){}
-    running=false;
-  }
-
-  return {
-    get enabled(){return enabled;},
-    init(){ ensure(); if(ctx && ctx.state==="suspended") ctx.resume(); started=true; },
-    resume(){ if(ctx && ctx.state==="suspended") ctx.resume(); },
-    setEnabled(v){ enabled=v; if(master) master.gain.value=v?volume:0; if(!v) stopMotor(); else if(state.powered) startMotor(); },
-    setVolume(v){ volume=clamp(v,0,1); if(master&&enabled) master.gain.value=volume; },
-    arm(){ if(!ensure()||!enabled) return; startMotor();
-      blip(180,0.18,"sawtooth",0.12); setTimeout(()=>blip(320,0.16,"triangle",0.14),120); setTimeout(()=>blip(520,0.5,"sine",0.16),260); },
-    disarm(){ stopMotor(); },
-    land(hard){ if(hard){ noise(0.32,0.5,700); blip(80,0.3,"sine",0.3);} else { noise(0.18,0.22,500); blip(120,0.2,"sine",0.14);} },
-    ring(){ blip(660,0.12,"sine",0.18); setTimeout(()=>blip(990,0.16,"sine",0.16),70); },
-    objective(){ blip(740,0.12,"sine",0.18); setTimeout(()=>blip(1110,0.18,"sine",0.16),80); },
-    success(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>blip(f,0.3,"sine",0.18),i*110)); },
-    click(){ blip(420,0.05,"square",0.06); },
-    warn(kind){
-      if(kind==="rth"){ blip(440,0.18,"square",0.16); setTimeout(()=>blip(330,0.3,"square",0.16),200); }
-      else if(kind==="crit"){ blip(880,0.1,"square",0.2); setTimeout(()=>blip(880,0.1,"square",0.2),180); setTimeout(()=>blip(880,0.18,"square",0.2),360); }
-      else { blip(700,0.12,"square",0.13); setTimeout(()=>blip(560,0.16,"square",0.12),160); }
-    },
-    resetWarnings(){ warned={lowBatt:false,critBatt:false,lowSig:false,rth:false,wind:false}; },
-    // per-frame: motor level/pitch + threshold-crossing alert sounds
-    update(dt){
-      if(running){
-        const thr=clamp(0.30 + Math.abs(INPUT.thr)*0.5 + Math.abs(state.vel.y)*0.06 + Math.hypot(state.vel.x,state.vel.z)*0.02, 0, 1);
-        const airborne = alt()>0.1 ? 1 : 0.6;
-        const tgtGain=(0.05 + thr*0.16)*airborne;
-        const tgtFreq=60 + thr*120;
-        const t=ctx.currentTime;
-        motorGain.gain.setTargetAtTime(tgtGain,t,0.08);
-        oscA.frequency.setTargetAtTime(tgtFreq,t,0.08);
-        oscB.frequency.setTargetAtTime(tgtFreq*1.5,t,0.08);
-        motorFilter.frequency.setTargetAtTime(420+thr*900,t,0.1);
-      }
-      if(!state.powered) return;
-      // alert sounds on threshold crossing (once until recovered)
-      if(state.battery<12){ if(!warned.critBatt){ warned.critBatt=true; this.warn("crit"); } }
-      else if(state.battery<25){ if(!warned.lowBatt){ warned.lowBatt=true; this.warn("batt"); } }
-      else { warned.lowBatt=false; if(state.battery>30) warned.critBatt=false; }
-      if(state.signal<20){ if(!warned.lowSig){ warned.lowSig=true; this.warn("sig"); } } else if(state.signal>45) warned.lowSig=false;
-      if(state.rthActive){ if(!warned.rth){ warned.rth=true; this.warn("rth"); } } else warned.rth=false;
-    }
-  };
-})();
-
-/* ====================== DRONE PRESENCE & ROTOR WASH ====================== */
-// rim glow under the body for separation from the ground
-const bodyGlow=new THREE.PointLight(0x3fa9ff,0,4);
-bodyGlow.position.set(0,-0.1,0); drone.add(bodyGlow);
-// soft ground wash ring (rotor downwash near the surface)
-const washMat=new THREE.MeshBasicMaterial({color:0x9fd0ff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
-const wash=new THREE.Mesh(new THREE.RingGeometry(0.6,2.4,40),washMat);
-wash.rotation.x=-Math.PI/2; wash.position.y=0.03; scene.add(wash);
-// faint pad-area ground glow for depth
-const padGlowMat=new THREE.MeshBasicMaterial({color:0x123048,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false});
-const padGlow=new THREE.Mesh(new THREE.RingGeometry(3.2,9,48),padGlowMat);
-padGlow.rotation.x=-Math.PI/2; padGlow.position.y=0.02; scene.add(padGlow);
-
-let bobT=0;
-function dronePolish(dt){
-  bobT+=dt;
-  const a=alt();
-  // hover bob — subtle vertical breathing while airborne and not in reduced-motion
-  if(state.powered && a>0.4 && !reduceMotion){
-    const intensity=clamp(0.05 - Math.hypot(state.vel.x,state.vel.z)*0.01, 0, 0.05);
-    drone.position.y += Math.sin(bobT*2.3)*intensity + Math.sin(bobT*1.1)*intensity*0.5;
-  }
-  // rim glow grows with throttle so the hero asset reads against the dark ground
-  bodyGlow.intensity = state.powered ? 0.4 + Math.abs(INPUT.thr)*0.9 + (a<3?0.4:0) : 0;
-  // rotor wash: visible only when low to the ground and motors loaded
-  const lowFactor=clamp(1-(a/2.6),0,1);
-  const load=clamp(Math.abs(INPUT.thr)+Math.abs(state.vel.y)*0.3,0,1);
-  const washOn=state.powered?lowFactor*(0.18+load*0.5):0;
-  wash.position.x=state.pos.x; wash.position.z=state.pos.z;
-  wash.material.opacity=lerp(wash.material.opacity, washOn, 0.2);
-  const ws=1+lowFactor*0.4+Math.sin(bobT*8)*0.04; wash.scale.set(ws,ws,ws);
-}
-
-/* ====================== GAMEPAD BUTTONS & CONTROLLER CUE ====================== */
-let cueShown=false, cueTimer=null, padBtnPrev={};
-function pollGamepadButtons(){
-  if(!gpad.connected || !navigator.getGamepads) return;
-  const gp=navigator.getGamepads()[gpad.index]; if(!gp) return;
-  const press=(i)=>{ const d=gp.buttons[i]&&gp.buttons[i].pressed; const was=padBtnPrev[i]; padBtnPrev[i]=d; return d&&!was; };
-  if(press(0)) toggleHover();      // A / cross
-  if(press(1)) resetDrone();       // B / circle
-  if(press(3)) cycleCamera();      // Y / triangle
-  if(press(9)) cycleCamera();      // start
-}
-function onControllerConnected(id){
-  updateControllerStatus();
-  clearTimeout(cueTimer);
-  const cue=$("ctrl-cue"); cue.classList.add("ok"); cue.classList.add("show");
-  $("ctrl-cue-txt").innerHTML="<b>Controller connected</b>Left stick: throttle &amp; yaw · Right stick: pitch &amp; roll.";
-  Audio.click();
-  setTimeout(()=>cue.classList.remove("show"), 5200);
-}
-function updateControllerStatus(){
-  const el=$("ctrl-status"); if(!el) return;
-  el.textContent = gpad.connected ? "Connected" : "Not detected";
-  el.style.color = gpad.connected ? "var(--green)" : "var(--muted)";
-}
-function maybeShowControllerCue(){
-  if(cueShown||gpad.connected) return;
-  cueTimer=setTimeout(()=>{
-    if(gpad.connected) return;
-    cueShown=true;
-    const cue=$("ctrl-cue"); cue.classList.remove("ok"); cue.classList.add("show");
-    $("ctrl-cue-txt").innerHTML="<b>Tip: Connect a controller</b>A gamepad gives smoother, more realistic flight than the keyboard.";
-    setTimeout(()=>cue.classList.remove("show"), 9000);
-  }, 6500);
-}
-$("ctrl-cue-x").onclick=()=>$("ctrl-cue").classList.remove("show");
-
-/* ====================== BOOT / ARMING SEQUENCE ====================== */
-const BOOT_STEPS=["Powering systems","Initializing avionics","Calibrating IMU & compass","Acquiring GPS lock","Link established"];
-let bootRunning=false, bootSkip=false;
-function startSession(lesson){
-  // shared entry for Launch button + first nav click from the start screen
-  $("start").classList.add("hidden");
-  Audio.init();
-  runBoot(()=>{
-    $("ui").classList.remove("hidden");
-    anatomyMode=false; state.powered=true; camMode=0; Audio.arm();
-    loadLesson(lesson||lessons[0]);
-    pushFeed("Systems online","Motors armed, telemetry live. Every input is explained in this feed — try the sticks.","good");
-    updateControllerStatus(); updateCamStatus();
-    maybeShowControllerCue();
-    maybeOnboard(lesson||lessons[0]);
-  });
-}
-function runBoot(done){
-  if(bootRunning) return; bootRunning=true; bootSkip=false;
-  const boot=$("boot"), list=$("boot-list"), line=$("boot-line"), bar=$("boot-bar");
-  list.innerHTML=BOOT_STEPS.map((s,i)=>'<div id="bs-'+i+'">'+s+"…</div>").join("");
-  boot.classList.remove("hidden"); bar.style.width="0%"; line.textContent=BOOT_STEPS[0]+"…";
-  const finish=()=>{ if(!bootRunning) return; bootRunning=false; boot.classList.add("hidden"); done&&done(); };
-  const skip=()=>{ if(!bootRunning) return; BOOT_STEPS.forEach((_,i)=>{const e=$("bs-"+i);if(e)e.classList.add("done");}); finish(); };
-  boot.onclick=skip;
-  let i=0;
-  const step=()=>{
-    if(bootSkip) return;
-    const e=$("bs-"+i); if(e) e.classList.add("done");
-    bar.style.width=Math.round(((i+1)/BOOT_STEPS.length)*100)+"%";
-    i++;
-    if(i<BOOT_STEPS.length){ line.textContent=BOOT_STEPS[i]+"…"; setTimeout(step,430); }
-    else { line.textContent="Systems ready. Begin training."; line.style.color="var(--green)"; Audio.success();
-      setTimeout(()=>{ line.style.color=""; finish(); }, 850); }
-  };
-  setTimeout(step,430);
-}
-
-/* ====================== SETTINGS / HELP / ONBOARDING ====================== */
-let reduceMotion=false;
-const LS={ get(k,d){ try{const v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;} },
-           set(k,v){ try{localStorage.setItem(k,v);}catch(e){} } };
-function openOverlay(id){ Audio.init(); Audio.click(); $(id).classList.add("show"); if(id==="settings"){updateControllerStatus();updateCamStatus();} }
-function closeOverlay(id){ Audio.click(); $(id).classList.remove("show"); }
-function updateCamStatus(){ const e=$("cam-status"); if(e) e.textContent=camModes[camMode].charAt(0)+camModes[camMode].slice(1).toLowerCase(); }
-function setMute(muted){
-  Audio.setEnabled(!muted);
-  $("mute-btn").textContent=muted?"🔇":"🔊";
-  $("tg-sound").classList.toggle("on",!muted);
-  LS.set("aeromind_muted", muted?"1":"0");
-}
-function setReduceMotion(on){
-  reduceMotion=on;
-  document.body.classList.toggle("reduce-motion",on);
-  $("tg-motion").classList.toggle("on",on);
-  LS.set("aeromind_reduce", on?"1":"0");
-}
-function maybeOnboard(lesson){
-  if(LS.get("aeromind_onboarded")==="1") return;
-  $("ob-goal").innerHTML="<b>This module:</b> "+stripTags(lesson.title)+". "+
-    (lesson.objectives&&lesson.objectives.length?lesson.objectives.length+" objectives to complete.":"Free practice — just get a feel for the aircraft.");
-  $("onboard").classList.add("show");
-}
-// wire tool buttons
-$("mute-btn").onclick=()=>setMute(Audio.enabled);   // toggling: if enabled→mute
-$("help-btn").onclick=()=>openOverlay("help");
-$("settings-btn").onclick=()=>openOverlay("settings");
-$("help-close").onclick=()=>closeOverlay("help");
-$("settings-close").onclick=()=>closeOverlay("settings");
-$("tg-sound").onclick=()=>setMute(Audio.enabled);
-$("tg-motion").onclick=()=>setReduceMotion(!reduceMotion);
-$("vol").oninput=(e)=>{ Audio.setVolume(e.target.value/100); LS.set("aeromind_vol",e.target.value); };
-$("replay-onboard").onclick=()=>{ LS.set("aeromind_onboarded","0"); closeOverlay("settings"); maybeOnboard(current); };
-$("onboard-go").onclick=()=>{ if($("ob-skip").checked) LS.set("aeromind_onboarded","1"); closeOverlay("onboard"); };
-// dismiss overlays on backdrop click
-["settings","help","onboard"].forEach(id=>{ $(id).addEventListener("click",e=>{ if(e.target.id===id) closeOverlay(id); }); });
-// extra hotkeys
-window.addEventListener("keydown",(e)=>{
-  if(e.code==="KeyM"){ setMute(Audio.enabled); }
-  else if(e.key==="?"||e.code==="Slash"){ $("help").classList.contains("show")?closeOverlay("help"):openOverlay("help"); }
-  else if(e.code==="KeyP"){ $("settings").classList.contains("show")?closeOverlay("settings"):openOverlay("settings"); }
-  else if(e.code==="Escape"){ ["settings","help","onboard"].forEach(id=>$(id).classList.remove("show")); }
-});
-// restore persisted prefs
-(function restorePrefs(){
-  const vol=LS.get("aeromind_vol","70"); $("vol").value=vol; Audio.setVolume(vol/100);
-  if(LS.get("aeromind_reduce")==="1") setReduceMotion(true);
-  if(LS.get("aeromind_muted")==="1"){ /* defer actual mute until audio context exists */ setMute(true); }
-})();
-
-/* small success flash helper */
-function successFlash(){ const f=$("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); }
+document.getElementById("launch-btn").onclick=()=>{
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("ui").classList.remove("hidden");
+  anatomyMode=false; state.powered=true; camMode=0;
+  loadLesson(lessons[0]);
+  pushFeed("Systems online","Motors armed, telemetry live. Try W/S/A/D/Q/E and Space/Shift — watch this feed explain each input.","good");
+};
+document.getElementById("anatomy-btn").onclick=enterAnatomy;
 
 /* ====================== MAIN LOOP ====================== */
 let last=performance.now();
 function loop(now){
   let dt=(now-last)/1000; last=now;
   dt=Math.min(dt,0.05); // clamp big frames
-  computeInput();        // merge keyboard + gamepad → INPUT
   updateFeed();          // edge-triggered explanations
   updatePhysics(dt);
   updateAvionics(dt);
@@ -1705,8 +1202,6 @@ function loop(now){
   updateVisuals(dt);
   updateCamera(dt);
   updateHUD();
-  Audio.update(dt);      // throttle-linked motor hum
-  pollGamepadButtons();  // gamepad face-button shortcuts (reset/camera/mode)
   // clear edges
   for(const k in keyEdges) keyEdges[k]=false;
   renderer.render(scene,camera);

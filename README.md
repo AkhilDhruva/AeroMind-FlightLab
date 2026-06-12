@@ -14,6 +14,7 @@ The prototype is a single self-contained HTML file — **no build step, no insta
 
 - **Run locally:** open `index.html` in any modern browser.
 - **Deploy:** drag this folder into [Vercel](https://vercel.com), [Netlify](https://netlify.com), or enable GitHub Pages. It is a static site; no configuration needed.
+- **Full guide:** see **[`DEPLOYMENT.md`](DEPLOYMENT.md)** for step-by-step deploy paths, pre/post-deploy checklists, an offline (CDN-free) fallback, and troubleshooting.
 
 ```bash
 # optional: run a local server (nicer than file://)
@@ -35,18 +36,10 @@ npx serve .
 | Safety-first behavior | Forgiving stabilised flight; smoothness is scored, not speed |
 | Scenario-based learning | Low battery, wind drift, signal loss, Return-to-Home |
 | Mistake feedback & assessment | Auto-detected objectives, stability score, letter-grade debrief |
-| Procedural audio | Throttle-linked motor bed, arming, ring/objective chimes, low-battery & RTH alerts — all Web Audio, no assets |
-| Controller support | Gamepad auto-detected; analog sticks map to a real transmitter layout, keyboard always works |
-| Premium feel | Boot/arming sequence, hover bob, rotor wash, rim lighting, animated objective completions |
-| Comfort & access | Mute, volume, reduced-motion toggle, replayable onboarding, full keyboard help — preferences persist |
 
 ---
 
 ## ✦ Controls
-
-Both keyboard and gamepad work simultaneously. A connected controller maps to a real
-transmitter layout (left stick = throttle/yaw, right stick = pitch/roll) and gives smooth
-analog input; the keyboard gives full-deflection digital input.
 
 | Key | Action | Behavior |
 |---|---|---|
@@ -57,24 +50,8 @@ analog input; the keyboard gives full-deflection digital input.
 | `H` | Mode | Toggle stabilisation vs. manual |
 | `R` | Reset | Return to pad, full battery |
 | `C` | Camera | Chase → orbit → top-down |
-| `M` | Mute | Toggle all sound |
-| `?` | Help | Controls & telemetry overlay |
-| `P` | Settings | Sound, volume, reduced motion, onboarding |
-| `Esc` | Close | Dismiss any open overlay |
-
-| Gamepad | Action |
-|---|---|
-| Left stick | Throttle (Y) · Yaw (X) |
-| Right stick | Pitch (Y) · Roll (X) |
-| Triggers | Fine throttle |
-| A · B · Y / Start | Stabilise toggle · Reset · Cycle camera |
 
 Mouse: in **Anatomy** mode, click drone parts to inspect them.
-
-> **Safety failsafe.** When battery gets critical or the control link is lost, the aircraft
-> sounds an alert and **automatically engages Return-to-Home**, flying itself back to the
-> launch pad and landing — pilot input is locked out so the failsafe can finish, exactly as
-> on real hardware.
 
 ---
 
@@ -124,8 +101,4 @@ node dev/_check.js   # syntax-check the simulator's inline JavaScript
 
 ## ✦ Scope & honesty
 
-AeroMind teaches lawful, safety-first operation of standard consumer/commercial drones. It deliberately excludes tactical, weaponised, surveillance, or unauthorized-operation use cases. The physics are a *training abstraction* tuned for learning clarity — the goal is correct intuition and safe habits, not engineering-accurate flight modelling.
-
-## License
-
-MIT — free to use, learn from, and adapt.
+AeroMind teaches lawful, safety-first operation of standard consumer/commercial drones. It deliberately excludes tactical, weaponised, surveillance, or unauthorized-operation use cases. The physics are a *training abstraction* tuned f
