@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AeroMind — Drone Avionics Training Simulator</title>
+<style>
+  :root{
+    --bg:#0a0e14;
+    --panel:rgba(14,19,28,0.82);
+    --panel-solid:#0e131c;
+    --stroke:rgba(120,160,210,0.18);
+    --stroke-strong:rgba(120,160,210,0.35);
+    --blue:#3fa9ff;
+    --blue-dim:#1c5d96;
+    --cyan:#36e0c8;
+    --amber:#ffb547;
+    --red:#ff5566;
+    --green:#54e08a;
+    --text:#e8f0fb;
+    --muted:#8ea3bf;
+    --faint:#5b6b82;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Consolas,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans)}
+  #scene-canvas{position:fixed;inset:0;display:block;z-index:0}
+  .hidden{display:none !important}
+
+  /* ---------- Start / hangar screen ---------- */
+  #start{
+    position:fixed;inset:0;z-index:50;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(1200px 600px at 50% 30%,rgba(20,40,70,0.55),rgba(6,9,14,0.96));
+    text-align:center;padding:24px;
+  }
+  #start .badge{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--cyan);
+    border:1px solid var(--stroke-strong);padding:6px 14px;border-radius:20px;margin-bottom:22px;text-transform:uppercase}
+  #start h1{font-size:clamp(30px,5vw,58px);font-weight:800;letter-spacing:-1px;line-height:1.02}
+  #start h1 span{color:var(--blue)}
+  #start p.sub{max-width:640px;margin:18px auto 0;color:var(--muted);font-size:clamp(14px,1.6vw,18px);line-height:1.55}
+  #start .row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:34px}
+  .btn{cursor:pointer;border:1px solid var(--stroke-strong);background:rgba(20,30,46,0.7);color:var(--text);
+    font-family:var(--mono);font-size:13px;letter-spacing:1px;padding:13px 22px;border-radius:10px;
+    transition:.18s;text-transform:uppercase;user-select:none}
+  .btn:hover{border-color:var(--blue);background:rgba(40,90,150,0.35);transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(180deg,var(--blue),var(--blue-dim));border-color:var(--blue);color:#04121f;font-weight:700}
+  .btn.primary:hover{filter:brightness(1.08)}
+  #start .keys{margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;max-width:680px}
+  #start .keys div{font-family:var(--mono);font-size:11.5px;color:var(--faint);border:1px solid var(--stroke);border-radius:8px;padding:8px 10px}
+  #start .keys b{color:var(--blue)}
+  #start .foot{position:absolute;bottom:18px;font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:1px}
+
+  /* ---------- HUD layout ---------- */
+  #ui{position:fixed;inset:0;z-index:10;pointer-events:none}
+  #ui .panel{pointer-events:auto}
+
+  /* top telemetry strip */
+  #hud-top{position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    display:flex;gap:8px;align-items:stretch;background:var(--panel);backdrop-filter:blur(10px);
+    border:1px solid var(--stroke);border-radius:12px;padding:8px 10px;max-width:96vw}
+  .tcard{min-width:62px;text-align:center;padding:2px 8px;position:relative}
+  .tcard + .tcard{border-left:1px solid var(--stroke)}
+  .tcard .lab{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--faint);text-transform:uppercase}
+  .tcard .val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);line-height:1.25;margin-top:2px}
+  .tcard .val small{font-size:10px;color:var(--muted);font-weight:500}
+  .tcard.warn .val{color:var(--amber)}
+  .tcard.crit .val{color:var(--red)}
+  .tcard.ok .val{color:var(--green)}
+
+  /* compass ribbon */
+  #compass-wrap{position:absolute;top:96px;left:50%;transform:translateX(-50%);
+    width:340px;height:30px;overflow:hidden;border:1px solid var(--stroke);border-radius:8px;
+    background:var(--panel);backdrop-filter:blur(8px)}
+  #compass-track{position:absolute;top:0;left:0;height:100%;display:flex;align-items:center;font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+  #compass-track span{display:inline-block;width:40px;text-align:center}
+  #compass-track span.card{color:var(--blue);font-weight:700}
+  #compass-needle{position:absolute;top:0;left:50%;width:2px;height:100%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+  /* left controller panel */
+  #left-panel{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:206px;
+    background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:14px;padding:14px}
+  .ph{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
+  .sticks{display:flex;gap:12px;justify-content:space-between}
+  .stick{flex:1}
+  .stick .gimbal{position:relative;width:80px;height:80px;margin:0 auto;border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,rgba(40,60,90,0.5),rgba(10,16,24,0.7));border:1px solid var(--stroke-strong)}
+  .stick .gimbal::before,.stick .gimbal::after{content:"";position:absolute;background:var(--stroke)}
+  .stick .gimbal::before{left:50%;top:8%;bottom:8%;width:1px;transform:translateX(-.5px)}
+  .stick .gimbal::after{top:50%;left:8%;right:8%;height:1px;transform:translateY(-.5px)}
+  .stick .dot{position:absolute;width:18px;height:18px;border-radius:50%;left:50%;top:50%;
+    transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 35%,#9fd4ff,var(--blue));
+    box-shadow:0 0 10px rgba(63,169,255,.7);transition:left .06s linear,top .06s linear}
+  .stick .cap{font-family:var(--mono);font-size:9px;color:var(--faint);text-align:center;margin-top:7px;letter-spacing:1px}
+  .stick .cap b{color:var(--muted);display:block;font-size:10px}
+  .keymap{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:5px}
+  .keycap{font-family:var(--mono);font-size:9.5px;color:var(--faint);border:1px solid var(--stroke);border-radius:6px;padding:5px 6px;display:flex;justify-content:space-between;transition:.1s}
+  .keycap b{color:var(--muted)}
+  .keycap.on{border-color:var(--blue);background:rgba(40,90,150,.4)}
+  .keycap.on b,.keycap.on{color:var(--blue)}
+
+  /* right lesson panel */
+  #right-panel{position:absolute;right:14px;top:14px;width:300px;max-height:calc(100vh - 130px);
+    display:flex;flex-direction:column;gap:10px}
+  .card{background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:14px;padding:14px}
+  #lesson-card .eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;color:var(--amber);text-transform:uppercase}
+  #lesson-title{font-size:18px;font-weight:700;margin:4px 0 8px}
+  #lesson-text{font-size:12.5px;line-height:1.5;color:var(--muted)}
+  #lesson-text b{color:var(--text)}
+  #obj-card .ph{margin-bottom:8px}
+  .obj{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);padding:4px 0;line-height:1.4}
+  .obj .box{flex:0 0 16px;width:16px;height:16px;border:1.5px solid var(--faint);border-radius:5px;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--green)}
+  .obj.done{color:var(--text)}
+  .obj.done .box{border-color:var(--green);background:rgba(84,224,138,.16)}
+  #feed-card{flex:1;min-height:120px;display:flex;flex-direction:column;overflow:hidden}
+  #feed{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:7px;padding-right:4px}
+  #feed::-webkit-scrollbar{width:5px}#feed::-webkit-scrollbar-thumb{background:var(--stroke-strong);border-radius:3px}
+  .fitem{font-size:11.5px;line-height:1.45;border-left:2px solid var(--blue);padding:2px 0 2px 9px;color:var(--muted);animation:fin .35s ease}
+  .fitem b{color:var(--text)}
+  .fitem.warn{border-color:var(--amber)}.fitem.warn b{color:var(--amber)}
+  .fitem.good{border-color:var(--green)}.fitem.good b{color:var(--green)}
+  @keyframes fin{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+
+  /* bottom mission bar */
+  #bottom{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:min(820px,94vw);
+    background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:14px;padding:10px 14px}
+  #bottom .top{display:flex;align-items:center;gap:12px}
+  #mission-name{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--cyan);text-transform:uppercase;white-space:nowrap}
+  #progress{flex:1;height:7px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden}
+  #progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .4s}
+  #score{font-family:var(--mono);font-size:11px;color:var(--muted)}#score b{color:var(--green)}
+  #lesson-nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .lbtn{pointer-events:auto;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.5px;color:var(--muted);
+    border:1px solid var(--stroke);background:rgba(20,28,42,.6);border-radius:7px;padding:6px 9px;transition:.12s;white-space:nowrap}
+  .lbtn:hover{border-color:var(--blue);color:var(--text)}
+  .lbtn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(54,224,200,.12)}
+  .lbtn.scn{color:var(--amber);border-color:rgba(255,181,71,.3)}
+  .lbtn.scn:hover{background:rgba(255,181,71,.14)}
+  .lbtn.scn.active{color:var(--amber);border-color:var(--amber);background:rgba(255,181,71,.18)}
+
+  /* warning banner */
+  #warnbar{position:absolute;top:132px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center}
+  .warnpill{font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:6px 14px;border-radius:20px;
+    background:rgba(255,85,102,.16);border:1px solid var(--red);color:#ffd0d6;animation:pulse 1.1s infinite;text-transform:uppercase}
+  .warnpill.amber{background:rgba(255,181,71,.14);border-color:var(--amber);color:#ffe3b8}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+  /* anatomy tooltip */
+  #anatomy-tip{position:absolute;max-width:240px;background:var(--panel-solid);border:1px solid var(--blue);
+    border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.45;color:var(--muted);z-index:20;pointer-events:none;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  #anatomy-tip b{color:var(--blue);display:block;margin-bottom:3px;font-size:13px}
+
+  /* camera + help hints */
+  #cam-hint{position:absolute;left:14px;bottom:14px;font-family:var(--mono);font-size:10px;color:var(--faint);
+    background:var(--panel);border:1px solid var(--stroke);border-radius:8px;padding:6px 10px;pointer-events:auto;cursor:pointer}
+  #cam-hint:hover{color:var(--blue);border-color:var(--blue)}
+
+  /* toast (lesson complete) */
+  #toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);z-index:30;
+    background:var(--panel-solid);border:1px solid var(--green);border-radius:16px;padding:22px 30px;text-align:center;
+    opacity:0;pointer-events:none;transition:.3s;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  #toast .big{font-size:22px;font-weight:800;color:var(--green)}
+  #toast .small{font-size:12.5px;color:var(--muted);margin-top:8px;max-width:320px;line-height:1.5}
+  #toast .grade{font-family:var(--mono);font-size:13px;color:var(--text);margin-top:10px}
+
+  @media (max-width:980px){
+    #left-panel{transform:none;top:auto;bottom:150px;left:10px;width:170px}
+    #right-panel{width:230px}
+    #compass-wrap{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="scene-canvas"></canvas>
+
+<!-- START SCREEN -->
+<div id="start">
+  <div class="badge">Avionics Training System</div>
+  <h1><span>AeroMind</span><br/>Drone Avionics Training Simulator</h1>
+  <p class="sub">Learn pitch, roll, yaw, throttle, telemetry literacy, and safe operating behavior in a 3D environment — before you ever touch real hardware. Every control input becomes a visible, explained lesson.</p>
+  <div class="row">
+    <div class="btn primary" id="launch-btn">▶ Launch Simulator</div>
+    <div class="btn" id="anatomy-btn">Inspect Drone Anatomy</div>
+  </div>
+  <div class="keys">
+    <div><b>W / S</b> — Pitch fwd / back</div>
+    <div><b>A / D</b> — Roll left / right</div>
+    <div><b>Q / E</b> — Yaw left / right</div>
+    <div><b>Space / Shift</b> — Throttle up / down</div>
+    <div><b>H</b> — Hover stabilize</div>
+    <div><b>R</b> — Reset · <b>C</b> — Camera</div>
+  </div>
+  <div class="foot">Educational civilian flight-training simulation · not a real drone control system</div>
+</div>
+
+<!-- IN-SIM UI -->
+<div id="ui" class="hidden">
+  <!-- top telemetry -->
+  <div id="hud-top" class="panel">
+    <div class="tcard"><div class="lab">ALT</div><div class="val" id="t-alt">0.0<small>m</small></div></div>
+    <div class="tcard"><div class="lab">SPD</div><div class="val" id="t-spd">0.0<small>m/s</small></div></div>
+    <div class="tcard"><div class="lab">HDG</div><div class="val" id="t-hdg">000°</div></div>
+    <div class="tcard"><div class="lab">PITCH</div><div class="val" id="t-pitch">0°</div></div>
+    <div class="tcard"><div class="lab">ROLL</div><div class="val" id="t-roll">0°</div></div>
+    <div class="tcard"><div class="lab">YAW r</div><div class="val" id="t-yaw">0<small>°/s</small></div></div>
+    <div class="tcard ok"><div class="lab">BATT</div><div class="val" id="t-batt">100<small>%</small></div></div>
+    <div class="tcard ok"><div class="lab">GPS</div><div class="val" id="t-gps">12</div></div>
+    <div class="tcard ok"><div class="lab">SIGNAL</div><div class="val" id="t-sig">100<small>%</small></div></div>
+    <div class="tcard"><div class="lab">WIND</div><div class="val" id="t-wind">0<small>m/s</small></div></div>
+    <div class="tcard"><div class="lab">HOME</div><div class="val" id="t-home">0<small>m</small></div></div>
+    <div class="tcard"><div class="lab">MODE</div><div class="val" id="t-mode" style="font-size:12px">STAB</div></div>
+  </div>
+
+  <div id="compass-wrap" class="panel">
+    <div id="compass-track"></div>
+    <div id="compass-needle"></div>
+  </div>
+
+  <div id="warnbar"></div>
+
+  <!-- left controller -->
+  <div id="left-panel" class="panel">
+    <div class="ph">Transmitter</div>
+    <div class="sticks">
+      <div class="stick">
+        <div class="gimbal"><div class="dot" id="stick-left"></div></div>
+        <div class="cap"><b>LEFT</b>Throttle / Yaw</div>
+      </div>
+      <div class="stick">
+        <div class="gimbal"><div class="dot" id="stick-right"></div></div>
+        <div class="cap"><b>RIGHT</b>Pitch / Roll</div>
+      </div>
+    </div>
+    <div class="keymap">
+      <div class="keycap" id="k-W"><span>Pitch +</span><b>W</b></div>
+      <div class="keycap" id="k-S"><span>Pitch −</span><b>S</b></div>
+      <div class="keycap" id="k-A"><span>Roll L</span><b>A</b></div>
+      <div class="keycap" id="k-D"><span>Roll R</span><b>D</b></div>
+      <div class="keycap" id="k-Q"><span>Yaw L</span><b>Q</b></div>
+      <div class="keycap" id="k-E"><span>Yaw R</span><b>E</b></div>
+      <div class="keycap" id="k-Space"><span>Thr +</span><b>SPC</b></div>
+      <div class="keycap" id="k-Shift"><span>Thr −</span><b>SHF</b></div>
+    </div>
+  </div>
+
+  <!-- right lesson + feed -->
+  <div id="right-panel">
+    <div class="card" id="lesson-card">
+      <div class="eyebrow" id="lesson-eyebrow">Module</div>
+      <div id="lesson-title">Free Flight</div>
+      <div id="lesson-text">Get a feel for the aircraft.</div>
+    </div>
+    <div class="card" id="obj-card">
+      <div class="ph">Mission Objectives</div>
+      <div id="obj-list"></div>
+    </div>
+    <div class="card" id="feed-card">
+      <div class="ph">Input → Physics → Explanation</div>
+      <div id="feed"></div>
+    </div>
+  </div>
+
+  <!-- bottom mission bar -->
+  <div id="bottom" class="panel">
+    <div class="top">
+      <div id="mission-name">Free Flight</div>
+      <div id="progress"><i></i></div>
+      <div id="score">SCORE <b id="score-val">—</b></div>
+    </div>
+    <div id="lesson-nav"></div>
+  </div>
+
+  <div id="cam-hint">CAM: CHASE  ·  press C</div>
+  <div id="anatomy-tip"></div>
+  <div id="toast"><div class="big">Lesson Complete</div><div class="small" id="toast-msg"></div><div class="grade" id="toast-grade"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* =========================================================================
+   AeroMind — Drone Avionics Training Simulator
+   Single-file Three.js prototype. Vanilla JS, no build step.
+   Structure: Scene → Drone → Physics → Telemetry → Lessons → UI
+   ========================================================================= */
+
+/* ---------- guard: ensure three loaded ---------- */
+if (typeof THREE === "undefined") {
+  document.getElementById("start").innerHTML =
+    '<div style="max-width:520px;text-align:center"><h1 style="color:#ff5566">3D engine failed to load</h1>'+
+    '<p style="color:#8ea3bf;margin-top:14px;line-height:1.6">AeroMind needs the Three.js library from a CDN. '+
+    'Connect to the internet and reload, or open this file through a local web server.</p></div>';
+  throw new Error("THREE not loaded");
+}
+
+/* ====================== GLOBAL STATE ====================== */
+const DEG = 180 / Math.PI;
+const RAD = Math.PI / 180;
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+
+const state = {
+  // kinematics (world)
+  pos: new THREE.Vector3(0, 0.42, 0),
+  vel: new THREE.Vector3(0, 0, 0),
+  heading: 0,        // yaw radians
+  yawRate: 0,        // rad/s
+  pitch: 0,          // smoothed tilt rad (+ = nose down / forward)
+  roll: 0,           // smoothed tilt rad (+ = bank right)
+  climbInput: 0,     // -1..1
+  throttlePct: 0,    // display
+  // avionics
+  battery: 100,
+  gps: 12,           // satellites
+  signal: 100,       // %
+  windDir: 0,        // radians
+  windSpeed: 0,      // m/s
+  // status
+  powered: false,
+  hover: true,       // stabilization on
+  landed: true,
+  mode: "STAB",
+  rthActive: false,
+  // book-keeping
+  prevPos: new THREE.Vector3(),
+  smoothness: 100,
+  hardLanding: false,
+  hoverHold: 0,
+};
+const GROUND_Y = 0.42;   // drone body centre rest height
+const MAX_TILT = 0.42;   // rad
+const MAX_SPEED = 6.5;   // m/s horizontal
+const MAX_CLIMB = 3.2;   // m/s vertical
+const MAX_YAWRATE = 1.6; // rad/s
+
+const keys = {};
+const keyEdges = {};     // freshly pressed this frame
+
+/* ====================== THREE SETUP ====================== */
+const canvas = document.getElementById("scene-canvas");
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0f17);
+scene.fog = new THREE.Fog(0x0a0f17, 45, 120);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 500);
+camera.position.set(0, 6, 12);
+
+/* ---------- lights ---------- */
+const hemi = new THREE.HemisphereLight(0xbcd4ff, 0x202830, 0.75);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2d8, 1.15);
+sun.position.set(18, 30, 14);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 90;
+sun.shadow.camera.left=-40; sun.shadow.camera.right=40;
+sun.shadow.camera.top=40; sun.shadow.camera.bottom=-40;
+sun.shadow.bias = -0.0003;
+scene.add(sun);
+const rim = new THREE.DirectionalLight(0x3fa9ff, 0.35);
+rim.position.set(-20, 12, -16);
+scene.add(rim);
+
+/* ====================== ENVIRONMENT ====================== */
+const env = new THREE.Group();
+scene.add(env);
+
+// ground
+const groundMat = new THREE.MeshStandardMaterial({color:0x12161d, roughness:0.95, metalness:0.0});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(300,300), groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+env.add(ground);
+
+// grid
+const grid = new THREE.GridHelper(120, 60, 0x244563, 0x18202b);
+grid.material.opacity = 0.5; grid.material.transparent = true;
+env.add(grid);
+
+// landing pad
+const padGroup = new THREE.Group();
+const pad = new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.2,0.08,48),
+  new THREE.MeshStandardMaterial({color:0x161d27, roughness:0.7, metalness:0.2}));
+pad.position.y = 0.04; pad.receiveShadow = true; padGroup.add(pad);
+const padRing = new THREE.Mesh(new THREE.TorusGeometry(3.0,0.06,8,64),
+  new THREE.MeshStandardMaterial({color:0x3fa9ff, emissive:0x1c5d96, emissiveIntensity:0.8, roughness:0.4}));
+padRing.rotation.x = Math.PI/2; padRing.position.y=0.09; padGroup.add(padRing);
+// H mark
+const hMat = new THREE.MeshStandardMaterial({color:0xbcd4ff, emissive:0x223,emissiveIntensity:0.2});
+const hbar=(x)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.02,2.0),hMat);m.position.set(x,0.1,0);return m;};
+padGroup.add(hbar(-0.7),hbar(0.7));
+const hcross=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.02,0.28),hMat);hcross.position.y=0.1;padGroup.add(hcross);
+env.add(padGroup);
+
+// distant boundary fence ring
+const boundary = new THREE.Mesh(new THREE.TorusGeometry(46,0.12,6,80),
+  new THREE.MeshStandardMaterial({color:0xff5566, emissive:0x330b10, emissiveIntensity:0.5,transparent:true,opacity:0.5}));
+boundary.rotation.x=Math.PI/2; boundary.position.y=0.4; env.add(boundary);
+
+// training tower (for compass/yaw + magnetic demo)
+const tower = new THREE.Group();
+const tMat = new THREE.MeshStandardMaterial({color:0x2a3340, roughness:0.6, metalness:0.4});
+const tbase = new THREE.Mesh(new THREE.BoxGeometry(2,8,2), tMat);
+tbase.position.set(-16,4,-10); tbase.castShadow=true; tbase.receiveShadow=true; tower.add(tbase);
+const ttop = new THREE.Mesh(new THREE.BoxGeometry(3,0.5,3), tMat);
+ttop.position.set(-16,8,-10); ttop.castShadow=true; tower.add(ttop);
+const tbeacon=new THREE.Mesh(new THREE.SphereGeometry(0.3,16,16),
+  new THREE.MeshStandardMaterial({color:0xff5566,emissive:0xff2233,emissiveIntensity:1.2}));
+tbeacon.position.set(-16,8.6,-10); tower.add(tbeacon);
+env.add(tower);
+
+// target rings (pitch lesson) along -Z
+const ringObjs=[];
+function makeRing(z, x, y){
+  const g=new THREE.Group();
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.5,0.08,10,48),
+    new THREE.MeshStandardMaterial({color:0x36e0c8, emissive:0x0d3b34, emissiveIntensity:0.9, roughness:0.3}));
+  g.add(ring);
+  const halo=new THREE.Mesh(new THREE.TorusGeometry(1.5,0.16,10,48),
+    new THREE.MeshBasicMaterial({color:0x36e0c8, transparent:true, opacity:0.18}));
+  g.add(halo);
+  g.position.set(x, y, z);
+  g.userData={passed:false, ring, halo};
+  env.add(g); ringObjs.push(g); return g;
+}
+makeRing(-10,0,2.2); makeRing(-18,0,2.2); makeRing(-26,0,2.2);
+
+// cones (roll lesson) — gate to strafe through, along +X
+const coneObjs=[];
+function makeCone(x,z){
+  const c=new THREE.Mesh(new THREE.ConeGeometry(0.45,1.2,16),
+    new THREE.MeshStandardMaterial({color:0xffb547, emissive:0x3a2603, emissiveIntensity:0.5, roughness:0.5}));
+  c.position.set(x,0.6,z); c.castShadow=true; env.add(c); coneObjs.push(c); return c;
+}
+makeCone(8,-2); makeCone(8,2); makeCone(13,-2); makeCone(13,2);
+
+// yaw target markers (4 around)
+const yawMarkers=[];
+function makeYawMarker(angleDeg,color){
+  const a=angleDeg*RAD; const r=14;
+  const m=new THREE.Mesh(new THREE.BoxGeometry(1.2,3,0.3),
+    new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.25, roughness:0.5}));
+  m.position.set(Math.sin(a)*r,1.6,-Math.cos(a)*r); m.castShadow=true;
+  m.userData={angle:angleDeg, hit:false, baseColor:color};
+  env.add(m); yawMarkers.push(m); return m;
+}
+makeYawMarker(0,0x3fa9ff); makeYawMarker(90,0x54e08a); makeYawMarker(180,0xffb547); makeYawMarker(270,0xff5566);
+
+// scatter some inspection objects for atmosphere
+const propMat=new THREE.MeshStandardMaterial({color:0x1b2230,roughness:0.8});
+for(let i=0;i<7;i++){
+  const b=new THREE.Mesh(new THREE.BoxGeometry(1+Math.random()*2,1+Math.random()*3,1+Math.random()*2),propMat);
+  const a=Math.random()*Math.PI*2, r=24+Math.random()*16;
+  b.position.set(Math.sin(a)*r, b.geometry.parameters.height/2, Math.cos(a)*r);
+  b.castShadow=true;b.receiveShadow=true;env.add(b);
+}
+
+/* ====================== DRONE MODEL ====================== */
+const drone = new THREE.Group();
+scene.add(drone);
+
+const carbon = new THREE.MeshStandardMaterial({color:0x14181f, roughness:0.45, metalness:0.6});
+const accent = new THREE.MeshStandardMaterial({color:0x3fa9ff, emissive:0x103a5e, emissiveIntensity:0.6, roughness:0.4, metalness:0.4});
+const motorMat = new THREE.MeshStandardMaterial({color:0x202833, roughness:0.5, metalness:0.7});
+
+// central body
+const body = new THREE.Mesh(new THREE.BoxGeometry(1.0,0.26,1.0), carbon);
+body.castShadow=true; drone.add(body);
+const bodyTop = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.12,0.7),
+  new THREE.MeshStandardMaterial({color:0x1c2533, roughness:0.4, metalness:0.5}));
+bodyTop.position.y=0.18; bodyTop.castShadow=true; drone.add(bodyTop);
+// blue accent strip (front indicator)
+const front = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.06,0.16), accent);
+front.position.set(0,0.05,-0.5); drone.add(front);
+// battery pack
+const batt = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.18,0.34),
+  new THREE.MeshStandardMaterial({color:0x0d1117, roughness:0.6}));
+batt.position.set(0,-0.16,0.05); batt.castShadow=true; drone.add(batt);
+
+// camera gimbal (front-bottom)
+const gimbal = new THREE.Group();
+const gball = new THREE.Mesh(new THREE.SphereGeometry(0.16,20,20),
+  new THREE.MeshStandardMaterial({color:0x0a0d12, roughness:0.3, metalness:0.4}));
+const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.09,0.06,20),
+  new THREE.MeshStandardMaterial({color:0x111a2a, emissive:0x0a2f4a, emissiveIntensity:0.5,metalness:0.7,roughness:0.2}));
+lens.rotation.x=Math.PI/2; lens.position.z=-0.13; gball.add(lens);
+gimbal.add(gball); gimbal.position.set(0,-0.18,-0.42); drone.add(gimbal);
+
+// arms + motors + props + nav lights
+const arms = [
+  {x: 0.85, z:-0.85, key:"FL", led:0xffffff},
+  {x:-0.85, z:-0.85, key:"FR", led:0xffffff},
+  {x: 0.85, z: 0.85, key:"RL", led:0xff3344},
+  {x:-0.85, z: 0.85, key:"RR", led:0xff3344},
+];
+const props = [];
+const navLights = [];
+arms.forEach((a,i)=>{
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.08,1.0), carbon);
+  arm.position.set(a.x*0.5, 0, a.z*0.5);
+  arm.lookAt(new THREE.Vector3(a.x, 0, a.z));
+  arm.castShadow=true; drone.add(arm);
+
+  const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.15,0.18,20), motorMat);
+  motor.position.set(a.x,0.02,a.z); motor.castShadow=true; drone.add(motor);
+
+  // propeller (two blades)
+  const prop = new THREE.Group();
+  const bladeMat=new THREE.MeshStandardMaterial({color:0x0c0f14, roughness:0.4,transparent:true,opacity:0.92});
+  const blade1=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.015,0.12),bladeMat);
+  const blade2=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.015,1.1),bladeMat);
+  prop.add(blade1,blade2);
+  prop.position.set(a.x,0.13,a.z);
+  prop.userData={dir:(i%2===0)?1:-1};
+  drone.add(prop); props.push(prop);
+
+  // nav LED
+  const led=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,10),
+    new THREE.MeshStandardMaterial({color:a.led, emissive:a.led, emissiveIntensity:1.4}));
+  led.position.set(a.x,0.1,a.z); drone.add(led); navLights.push(led);
+});
+
+// landing skids
+const skidMat=new THREE.MeshStandardMaterial({color:0x161b22, roughness:0.6, metalness:0.3});
+[-0.55,0.55].forEach(x=>{
+  const bar=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.06,1.3),skidMat);
+  bar.position.set(x,-0.32,0); bar.castShadow=true; drone.add(bar);
+  [-0.5,0.5].forEach(z=>{
+    const leg=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.28,0.05),skidMat);
+    leg.position.set(x,-0.2,z); leg.castShadow=true; drone.add(leg);
+  });
+});
+
+drone.position.copy(state.pos);
+
+/* ---------- helper arrows (thrust / movement) ---------- */
+const moveArrow = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(), 2, 0x3fa9ff, 0.5, 0.3);
+const thrustArrow = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(), 1.6, 0x36e0c8, 0.4, 0.25);
+scene.add(moveArrow, thrustArrow);
+
+/* ====================== INPUT ====================== */
+const codeMap = {
+  KeyW:"W",KeyS:"S",KeyA:"A",KeyD:"D",KeyQ:"Q",KeyE:"E",
+  Space:"Space",ShiftLeft:"Shift",ShiftRight:"Shift",
+  KeyR:"R",KeyH:"H",KeyC:"C"
+};
+window.addEventListener("keydown",(e)=>{
+  const k=codeMap[e.code]; if(!k) return;
+  if(["Space","Shift"].includes(k) || k.length===1) e.preventDefault();
+  if(!keys[k]) keyEdges[k]=true;
+  keys[k]=true;
+  if(k==="R") resetDrone();
+  if(k==="H") toggleHover();
+  if(k==="C") cycleCamera();
+});
+window.addEventListener("keyup",(e)=>{
+  const k=codeMap[e.code]; if(!k) return;
+  keys[k]=false;
+});
+
+/* ====================== PHYSICS ====================== */
+function updatePhysics(dt){
+  if(!state.powered) return;
+
+  // ---- rotational input ----
+  const pitchIn = (keys.W?1:0) - (keys.S?1:0);   // +1 forward
+  const rollIn  = (keys.D?1:0) - (keys.A?1:0);   // +1 right
+  const yawIn   = (keys.E?1:0) - (keys.Q?1:0);   // +1 clockwise
+  const thrIn   = (keys.Space?1:0) - (keys.Shift?1:0);
+
+  // smoothed tilt toward input target
+  const tgtPitch = pitchIn * MAX_TILT;
+  const tgtRoll  = rollIn  * MAX_TILT;
+  state.pitch = lerp(state.pitch, tgtPitch, 1-Math.pow(0.0001, dt));
+  state.roll  = lerp(state.roll , tgtRoll , 1-Math.pow(0.0001, dt));
+
+  // yaw
+  state.yawRate = lerp(state.yawRate, yawIn*MAX_YAWRATE, 1-Math.pow(0.0005,dt));
+  state.heading += state.yawRate * dt;
+
+  // ---- translational ----
+  // desired local horizontal velocity from tilt
+  const desLocalX = Math.sin(state.roll) / Math.sin(MAX_TILT) * MAX_SPEED;   // right
+  const desLocalZ = -Math.sin(state.pitch) / Math.sin(MAX_TILT) * MAX_SPEED; // forward(-Z)
+  // rotate into world by heading
+  const ch=Math.cos(state.heading), sh=Math.sin(state.heading);
+  let desWX = desLocalX*ch + desLocalZ*sh;
+  let desWZ = -desLocalX*sh + desLocalZ*ch;
+
+  // GPS quality affects how cleanly velocity tracks (drift when weak)
+  const gpsFactor = clamp(state.gps/12, 0.25, 1);
+  const track = lerp(0.6, 2.6, gpsFactor) * dt;
+  state.vel.x = lerp(state.vel.x, desWX, clamp(track,0,1));
+  state.vel.z = lerp(state.vel.z, desWZ, clamp(track,0,1));
+
+  // wind drift
+  const wx = Math.sin(state.windDir)*state.windSpeed;
+  const wz = -Math.cos(state.windDir)*state.windSpeed;
+  state.vel.x += wx*dt*0.9;
+  state.vel.z += wz*dt*0.9;
+
+  // ---- vertical ----
+  state.climbInput = thrIn;
+  if(state.rthActive){
+    // climb to safe alt then home then descend handled in RTH routine
+  }
+  const tgtVY = state.climbInput * MAX_CLIMB;
+  // hover stabilization holds altitude when no input; without it, slight sink
+  const vAuth = state.hover ? 1-Math.pow(0.0002,dt) : 1-Math.pow(0.02,dt);
+  state.vel.y = lerp(state.vel.y, tgtVY, vAuth);
+  if(!state.hover && state.climbInput===0) state.vel.y -= 1.2*dt; // gravity bleed when manual
+
+  // battery sag: weak battery reduces lift authority
+  if(state.battery < 15){ state.vel.y -= (15-state.battery)*0.012*dt; }
+
+  // integrate
+  state.prevPos.copy(state.pos);
+  state.pos.x += state.vel.x*dt;
+  state.pos.y += state.vel.y*dt;
+  state.pos.z += state.vel.z*dt;
+
+  // boundary clamp (safety ring radius 46)
+  const distXZ=Math.hypot(state.pos.x,state.pos.z);
+  if(distXZ>45){
+    const n=45/distXZ; state.pos.x*=n; state.pos.z*=n;
+    state.vel.x*=0.2; state.vel.z*=0.2;
+  }
+
+  // ground / landing
+  if(state.pos.y <= GROUND_Y){
+    const impact = state.vel.y;
+    state.pos.y = GROUND_Y;
+    if(impact < -2.2){ state.hardLanding=true; state.smoothness=clamp(state.smoothness-12,0,100);
+      pushFeed("Hard landing detected","Descent rate was too high at touchdown. On real hardware this risks bent arms or a cracked frame. Ease throttle near the ground.","warn"); }
+    state.vel.y=0; state.landed=true;
+  } else { state.landed=false; }
+
+  // throttle % display
+  state.throttlePct = clamp(48 + state.climbInput*42 + (state.vel.y*3), 0, 100);
+
+  // smoothness scoring: penalize jerky tilt
+  const jerk = Math.abs(pitchIn)+Math.abs(rollIn)+Math.abs(yawIn);
+  if(jerk>2.5) state.smoothness=clamp(state.smoothness-2*dt,0,100);
+  else state.smoothness=clamp(state.smoothness+1.2*dt,0,100);
+
+  // apply to model
+  drone.position.copy(state.pos);
+  drone.rotation.set(state.pitch, state.heading, -state.roll, "YXZ");
+}
+
+/* ---------- avionics update ---------- */
+let envTick=0;
+function updateAvionics(dt){
+  if(!state.powered) return;
+  envTick+=dt;
+  // battery drain (more under throttle/maneuver)
+  const load = 1 + Math.abs(state.climbInput)*1.6 + (Math.abs(state.pitch)+Math.abs(state.roll))*1.5;
+  state.battery = clamp(state.battery - dt*scenario.batteryDrain*load, 0, 100);
+  // gps / signal wander
+  if(scenario.gpsWeak){
+    state.gps = clamp(state.gps + (Math.random()-0.55)*dt*6, 3, 7);
+  } else {
+    state.gps = clamp(state.gps + (Math.random()-0.5)*dt*2, 9, 14);
+  }
+  const homeDist=Math.hypot(state.pos.x,state.pos.z);
+  if(scenario.signalLoss){
+    state.signal = clamp(state.signal - dt*14, 0, 100);
+  } else {
+    const target = clamp(100 - homeDist*1.1, 35, 100);
+    state.signal = lerp(state.signal, target, 0.6*dt);
+  }
+  // wind
+  state.windSpeed = lerp(state.windSpeed, scenario.wind, 0.4*dt);
+  state.windDir += dt*0.15;
+
+  // flight mode
+  if(state.rthActive) state.mode="RTH";
+  else if(!state.hover) state.mode="MANUAL";
+  else if(state.gps<8) state.mode="ATTI";
+  else state.mode="STAB";
+
+  // auto RTH triggers
+  if((state.battery<12 || state.signal<8) && !state.rthActive && !state.landed){
+    triggerRTH(state.battery<12 ? "Critical battery" : "Signal lost");
+  }
+  if(state.rthActive) runRTH(dt);
+}
+
+/* ---------- Return To Home ---------- */
+function triggerRTH(reason){
+  state.rthActive=true; state.hover=true;
+  pushFeed("Return-to-Home engaged","<b>"+reason+".</b> The flight controller is now flying the aircraft back to the launch point automatically. Watch — don't fight the controls.","warn");
+}
+function runRTH(dt){
+  // climb to 4m, fly to origin, descend
+  const safeAlt=4;
+  if(state.pos.y < safeAlt-0.2 && Math.hypot(state.pos.x,state.pos.z)>2){
+    state.vel.y=lerp(state.vel.y,1.5,0.4*dt);
+  }
+  const dx=-state.pos.x, dz=-state.pos.z, d=Math.hypot(dx,dz);
+  if(d>0.6){
+    state.vel.x=lerp(state.vel.x, dx/d*3.5, 0.5*dt);
+    state.vel.z=lerp(state.vel.z, dz/d*3.5, 0.5*dt);
+    // face travel direction
+    state.heading=lerp(state.heading, Math.atan2(dx, -dz), 0.4*dt);
+  } else {
+    state.vel.x*=0.9; state.vel.z*=0.9;
+    state.vel.y=lerp(state.vel.y,-1.0,0.4*dt); // descend
+    if(state.pos.y<=GROUND_Y+0.02){
+      state.rthActive=false;
+      pushFeed("Safe landing complete","The aircraft recovered itself to the home point. In the field, a calm pilot lets RTH finish rather than panicking.","good");
+    }
+  }
+}
+
+/* ====================== CAMERA ====================== */
+const camModes=["CHASE","ORBIT","TOP"];
+let camMode=0;
+let orbitAngle=0;
+function cycleCamera(){ camMode=(camMode+1)%camModes.length; document.getElementById("cam-hint").textContent="CAM: "+camModes[camMode]+"  ·  press C"; }
+function updateCamera(dt){
+  const tgt=state.pos;
+  let desired=new THREE.Vector3();
+  if(camModes[camMode]==="CHASE"){
+    const ch=Math.cos(state.heading), sh=Math.sin(state.heading);
+    desired.set(tgt.x + sh*9, tgt.y+3.4, tgt.z + ch*9); // behind based on heading (+Z local back)
+  } else if(camModes[camMode]==="ORBIT"){
+    orbitAngle+=dt*0.25;
+    desired.set(tgt.x+Math.sin(orbitAngle)*11, tgt.y+5, tgt.z+Math.cos(orbitAngle)*11);
+  } else { // TOP
+    desired.set(tgt.x+0.01, tgt.y+16, tgt.z+0.01);
+  }
+  camera.position.lerp(desired, 1-Math.pow(0.001,dt));
+  camera.lookAt(tgt.x, tgt.y+0.3, tgt.z);
+}
+
+/* ====================== VISUALS (props, lights, arrows) ====================== */
+let blinkT=0;
+function updateVisuals(dt){
+  // propeller spin scales with throttle/power
+  const spin = state.powered ? (24 + state.throttlePct*0.5 + Math.abs(state.vel.y)*8) : 0;
+  props.forEach(p=>{ p.rotation.y += p.userData.dir * spin * dt; });
+  // nav lights blink
+  blinkT+=dt;
+  const on = (Math.sin(blinkT*6)>0);
+  navLights.forEach((l,i)=>{ l.material.emissiveIntensity = (i<2? (on?1.6:0.2) : (on?0.2:1.6)); });
+  // beacon
+  tbeacon.material.emissiveIntensity = 0.6+Math.abs(Math.sin(blinkT*3))*1.2;
+
+  // arrows
+  const speed=Math.hypot(state.vel.x,state.vel.z);
+  if(speed>0.15 && state.powered){
+    moveArrow.visible=true;
+    moveArrow.position.set(state.pos.x,state.pos.y,state.pos.z);
+    moveArrow.setDirection(new THREE.Vector3(state.vel.x,0,state.vel.z).normalize());
+    moveArrow.setLength(clamp(speed*0.6,1,4),0.5,0.3);
+  } else moveArrow.visible=false;
+  if(state.powered && Math.abs(state.climbInput)>0.1){
+    thrustArrow.visible=true;
+    thrustArrow.position.set(state.pos.x,state.pos.y+0.3,state.pos.z);
+    thrustArrow.setDirection(new THREE.Vector3(0,state.climbInput>0?1:-1,0));
+  } else thrustArrow.visible=false;
+
+  // ring pulse
+  ringObjs.forEach(r=>{ if(!r.userData.passed){ r.userData.halo.material.opacity=0.12+Math.abs(Math.sin(blinkT*2))*0.12; } });
+}
+
+/* ====================== LESSONS ====================== */
+const lessons = [
+  { id:"free", name:"Free Flight", eyebrow:"Sandbox",
+    title:"Free Flight",
+    text:"No objectives — just fly. Use <b>W/S</b> pitch, <b>A/D</b> roll, <b>Q/E</b> yaw, <b>Space/Shift</b> throttle. Watch the HUD and the explanation feed react to every input.",
+    scenario:{}, objectives:[] },
+
+  { id:"throttle", name:"Throttle", eyebrow:"Module 01 · Lift",
+    title:"Throttle — Vertical Lift",
+    text:"Throttle controls how hard all four motors spin together, which sets <b>lift</b>. Smooth throttle prevents sudden climbs and hard landings.",
+    scenario:{}, objectives:[
+      {t:"Lift off and climb above 1.5 m", chk:s=>alt()>1.5},
+      {t:"Hold a stable hover for 3 s", chk:s=>state.hoverHold>3},
+      {t:"Descend and land softly (no hard impact)", chk:s=>state.landed && alt()<0.15 && !state.hardLanding && s.maxAlt>1} ] },
+
+  { id:"pitch", name:"Pitch", eyebrow:"Module 02 · Fwd/Back",
+    title:"Pitch — Forward & Back",
+    text:"Pitch tilts the nose down or up. <b>The drone tilts first, then moves.</b> Push <b>W</b>: rear motors spin up, the nose dips, and the aircraft accelerates forward through the rings.",
+    scenario:{}, objectives:[
+      {t:"Take off and climb to ring height", chk:s=>alt()>1.5},
+      {t:"Fly forward through all 3 green rings", chk:s=>ringsPassed()===3},
+      {t:"Stop smoothly past the last ring", chk:s=>ringsPassed()===3 && Math.hypot(state.vel.x,state.vel.z)<0.6} ] },
+
+  { id:"roll", name:"Roll", eyebrow:"Module 03 · Sideways",
+    title:"Roll — Lateral Movement",
+    text:"Roll banks the aircraft left or right so it slides <b>sideways without turning</b>. The nose keeps pointing the same way. Strafe right with <b>D</b> through the cone gate.",
+    scenario:{}, objectives:[
+      {t:"Take off and hold altitude", chk:s=>alt()>1.2},
+      {t:"Strafe right past the cone gate (x > 10)", chk:s=>state.pos.x>10.5},
+      {t:"Keep the nose forward (heading near 0°)", chk:s=>Math.abs(wrap180(state.heading*DEG))<25 && state.pos.x>10.5} ] },
+
+  { id:"yaw", name:"Yaw", eyebrow:"Module 04 · Rotation",
+    title:"Yaw — Heading Control",
+    text:"Yaw rotates the drone around its vertical axis. It changes <b>where the drone faces, not where it is</b>. Use <b>Q/E</b> to rotate and aim the camera at each coloured marker.",
+    scenario:{}, objectives:[
+      {t:"Face the blue marker (0°)", chk:s=>yawNear(0)},
+      {t:"Rotate to the green marker (90°)", chk:s=>yawNear(90)},
+      {t:"Continue to amber (180°) and red (270°)", chk:s=>yawNear(180)&&yawNear(270)} ] },
+
+  { id:"combined", name:"Combined", eyebrow:"Module 05 · Mission",
+    title:"Combined Flight Mission",
+    text:"Put it all together: take off, hover, fly forward, rotate toward a target, strafe, and return home to land. This is your first full simulated sortie.",
+    scenario:{}, objectives:[
+      {t:"Take off and hover (>1.5 m)", chk:s=>alt()>1.5},
+      {t:"Fly forward 12 m from home", chk:s=>s.maxHome>12},
+      {t:"Rotate at least 90°", chk:s=>s.maxYawTravel>90},
+      {t:"Return and land near home (<3 m)", chk:s=>state.landed&&Math.hypot(state.pos.x,state.pos.z)<3&&s.maxHome>12} ] },
+
+  { id:"avionics", name:"Avionics", eyebrow:"Module 06 · Telemetry",
+    title:"Avionics & Telemetry Literacy",
+    text:"Read the aircraft, don't just fly it. Watch <b>battery, GPS satellites, signal %, heading, altitude and wind</b> in the top strip. Good operators scan telemetry constantly.",
+    scenario:{batteryDrain:1.4}, objectives:[
+      {t:"Climb and note altitude / heading update", chk:s=>alt()>2 && s.maxYawTravel>20},
+      {t:"Fly out until signal drops below 70%", chk:s=>state.signal<70},
+      {t:"Return until signal recovers above 90%", chk:s=>s.sawLowSignal&&state.signal>90} ] },
+
+  { id:"battery", name:"⚠ Low Battery", eyebrow:"Scenario · Emergency", scn:true,
+    title:"Failure: Low Battery",
+    text:"Battery is draining fast. When it gets critical the aircraft will <b>auto Return-to-Home</b>. Your job: recognise it early, stop the mission, and bring it back before it forces a landing.",
+    scenario:{batteryDrain:7.0}, objectives:[
+      {t:"Notice the low-battery warning", chk:s=>state.battery<25},
+      {t:"Head back toward home", chk:s=>s.sawLowBatt && Math.hypot(state.pos.x,state.pos.z)<8},
+      {t:"Land safely on or near the pad", chk:s=>state.landed&&Math.hypot(state.pos.x,state.pos.z)<4&&s.sawLowBatt} ] },
+
+  { id:"wind", name:"⚠ Wind Drift", eyebrow:"Scenario · Emergency", scn:true,
+    title:"Failure: Wind Drift",
+    text:"A crosswind is pushing the aircraft off position. <b>Correct with opposite input</b> — lean gently into the wind to hold your spot. Fight drift smoothly, don't over-correct.",
+    scenario:{wind:3.0}, objectives:[
+      {t:"Take off into the wind", chk:s=>alt()>1.5},
+      {t:"Hold position near the pad for 4 s despite drift", chk:s=>state.windHold>4} ] },
+
+  { id:"signal", name:"⚠ Signal Loss", eyebrow:"Scenario · Emergency", scn:true,
+    title:"Failure: Signal Loss",
+    text:"Control link is degrading. As signal nears zero the aircraft triggers <b>automatic Return-to-Home</b>. Watch the recovery — understanding failsafe behaviour is core to safe operation.",
+    scenario:{signalLoss:true}, objectives:[
+      {t:"Fly out and let signal degrade", chk:s=>state.signal<40},
+      {t:"Observe automatic Return-to-Home engage", chk:s=>state.rthActive||s.sawRTH},
+      {t:"Let the failsafe complete the landing", chk:s=>s.sawRTH&&state.landed} ] },
+];
+
+let current = lessons[0];
+const scenario = { batteryDrain:0.7, wind:0, gpsWeak:false, signalLoss:false };
+const track = { maxAlt:0, maxHome:0, maxYawTravel:0, startHeading:0, sawLowSignal:false, sawLowBatt:false, sawRTH:false };
+
+function alt(){ return state.pos.y - GROUND_Y; }
+function wrap180(d){ d%=360; if(d>180)d-=360; if(d<-180)d+=360; return d; }
+function ringsPassed(){ return ringObjs.filter(r=>r.userData.passed).length; }
+function yawNear(deg){ const m=yawMarkers.find(y=>y.userData.angle===deg); return m?m.userData.hit:false; }
+
+function loadLesson(les){
+  current=les;
+  // reset scenario
+  scenario.batteryDrain = les.scenario.batteryDrain || 0.7;
+  scenario.wind = les.scenario.wind || 0;
+  scenario.gpsWeak = !!les.scenario.gpsWeak;
+  scenario.signalLoss = !!les.scenario.signalLoss;
+  // reset trackers + drone
+  resetDrone(true);
+  // ui
+  document.getElementById("lesson-eyebrow").textContent=les.eyebrow;
+  document.getElementById("lesson-title").textContent=les.title;
+  document.getElementById("lesson-text").innerHTML=les.text;
+  document.getElementById("mission-name").textContent=les.name;
+  buildObjectives();
+  document.querySelectorAll(".lbtn").forEach(b=>b.classList.toggle("active", b.dataset.id===les.id));
+  // show/hide lesson-specific props
+  ringObjs.forEach(r=>r.visible = (les.id==="pitch"||les.id==="combined"));
+  coneObjs.forEach(c=>c.visible = (les.id==="roll"||les.id==="combined"));
+  yawMarkers.forEach(m=>m.visible = (les.id==="yaw"||les.id==="combined"||les.id==="avionics"));
+  pushFeed("Module loaded: "+les.title, stripTags(les.text).slice(0,140)+"…","good");
+}
+
+function buildObjectives(){
+  const wrap=document.getElementById("obj-list"); wrap.innerHTML="";
+  current._done = current.objectives.map(()=>false);
+  if(current.objectives.length===0){
+    wrap.innerHTML='<div class="obj">Free practice — no objectives. Explore the controls.</div>';
+    document.getElementById("progress").firstElementChild.style.width="0%";
+    document.getElementById("score-val").textContent="—";
+    return;
+  }
+  current.objectives.forEach((o,i)=>{
+    const d=document.createElement("div"); d.className="obj"; d.id="obj-"+i;
+    d.innerHTML='<div class="box"></div><div>'+o.t+'</div>'; wrap.appendChild(d);
+  });
+}
+
+function checkObjectives(){
+  if(!current.objectives.length) return;
+  let done=0;
+  current.objectives.forEach((o,i)=>{
+    if(!current._done[i] && o.chk(track)){
+      current._done[i]=true;
+      const el=document.getElementById("obj-"+i);
+      if(el){el.classList.add("done"); el.querySelector(".box").textContent="✓";}
+      pushFeed("Objective complete","“"+o.t+"” — nicely done.","good");
+    }
+    if(current._done[i]) done++;
+  });
+  const pct=done/current.objectives.length*100;
+  document.getElementById("progress").firstElementChild.style.width=pct+"%";
+  const grade=Math.round(state.smoothness);
+  document.getElementById("score-val").textContent=grade;
+  if(done===current.objectives.length && !current._complete){
+    current._complete=true; lessonComplete(grade);
+  }
+}
+
+function lessonComplete(grade){
+  const letter = grade>90?"A — Smooth & precise":grade>75?"B — Solid control":grade>60?"C — Keep practising inputs":"D — Work on smoothness";
+  const t=document.getElementById("toast");
+  document.getElementById("toast-msg").textContent="You completed "+current.title+". "+(state.hardLanding?"Watch those firm landings next time.":"Controlled and stable throughout.");
+  document.getElementById("toast-grade").textContent="Stability score "+grade+"/100   ·   "+letter;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 4200);
+  pushFeed("✔ Lesson complete: "+current.title, "Stability score "+grade+"/100. "+letter+".","good");
+}
+
+/* ====================== EXPLANATION FEED (killer feature) ====================== */
+const feedEl=document.getElementById("feed");
+let feedCount=0;
+function pushFeed(title, body, cls){
+  const d=document.createElement("div");
+  d.className="fitem"+(cls?(" "+cls):"");
+  d.innerHTML="<b>"+title+"</b> "+(body||"");
+  feedEl.appendChild(d);
+  while(feedEl.children.length>14) feedEl.removeChild(feedEl.firstChild);
+  feedEl.scrollTop=feedEl.scrollHeight;
+  feedCount++;
+}
+function stripTags(s){return s.replace(/<[^>]+>/g,"");}
+
+// edge-triggered explanations for each control
+const explain = {
+  W:["Forward pitch applied","The rear rotors spin up, the nose dips down, and the drone accelerates <b>forward</b>. Notice it tilts <i>before</i> it moves."],
+  S:["Back pitch applied","The front rotors spin up, the nose lifts, and the drone slows or backs up. Useful for braking forward momentum."],
+  A:["Left roll applied","The right-side rotors push harder, the aircraft banks left and slides <b>sideways</b> — the nose keeps pointing the same way."],
+  D:["Right roll applied","The left-side rotors push harder, the aircraft banks right and strafes sideways without turning."],
+  Q:["Left yaw applied","Diagonal rotor pairs change torque balance, spinning the aircraft <b>counter-clockwise</b>. Heading decreases — position barely changes."],
+  E:["Right yaw applied","Torque balance spins the aircraft <b>clockwise</b>. You're changing where it faces, not where it is."],
+  Space:["Throttle increased","All four rotors spin faster together → more <b>lift</b> → the drone climbs. Battery drains faster under throttle."],
+  Shift:["Throttle reduced","Rotor speed drops, lift falls below weight, and the drone descends. Ease off near the ground for a soft landing."],
+};
+function updateFeed(){
+  for(const k in explain){
+    if(keyEdges[k]){ pushFeed(explain[k][0], explain[k][1]); }
+  }
+}
+
+/* ====================== TELEMETRY UI ====================== */
+const $=(id)=>document.getElementById(id);
+function setCard(id,cls){ const c=$(id).parentElement; c.classList.remove("ok","warn","crit"); if(cls)c.classList.add(cls); }
+function updateHUD(){
+  $("t-alt").innerHTML=alt().toFixed(1)+'<small>m</small>';
+  const spd=Math.hypot(state.vel.x,state.vel.z);
+  $("t-spd").innerHTML=spd.toFixed(1)+'<small>m/s</small>';
+  let hdg=(state.heading*DEG)%360; if(hdg<0)hdg+=360;
+  $("t-hdg").textContent=String(Math.round(hdg)).padStart(3,"0")+"°";
+  $("t-pitch").textContent=Math.round(-state.pitch*DEG)+"°";
+  $("t-roll").textContent=Math.round(state.roll*DEG)+"°";
+  $("t-yaw").innerHTML=Math.round(state.yawRate*DEG)+'<small>°/s</small>';
+
+  $("t-batt").innerHTML=Math.round(state.battery)+'<small>%</small>';
+  setCard("t-batt", state.battery<15?"crit":state.battery<35?"warn":"ok");
+  $("t-gps").textContent=Math.round(state.gps);
+  setCard("t-gps", state.gps<6?"crit":state.gps<9?"warn":"ok");
+  $("t-sig").innerHTML=Math.round(state.signal)+'<small>%</small>';
+  setCard("t-sig", state.signal<25?"crit":state.signal<55?"warn":"ok");
+  $("t-wind").innerHTML=state.windSpeed.toFixed(1)+'<small>m/s</small>';
+  setCard("t-wind", state.windSpeed>2.5?"warn":"");
+  $("t-home").innerHTML=Math.round(Math.hypot(state.pos.x,state.pos.z))+'<small>m</small>';
+  $("t-mode").textContent=state.mode;
+  setCard("t-mode", state.mode==="RTH"?"warn":state.mode==="MANUAL"?"warn":"ok");
+
+  // compass ribbon
+  buildCompass(hdg);
+
+  // controller sticks
+  const lx=((keys.E?1:0)-(keys.Q?1:0)); const ly=((keys.Space?1:0)-(keys.Shift?1:0));
+  const rx=((keys.D?1:0)-(keys.A?1:0)); const ry=((keys.W?1:0)-(keys.S?1:0));
+  posStick("stick-left", lx, ly);
+  posStick("stick-right", rx, ry);
+  [["W","k-W"],["S","k-S"],["A","k-A"],["D","k-D"],["Q","k-Q"],["E","k-E"],["Space","k-Space"],["Shift","k-Shift"]]
+    .forEach(([k,id])=>{ $(id).classList.toggle("on", !!keys[k]); });
+
+  // warnings
+  updateWarnings();
+}
+function posStick(id,x,y){
+  const el=$(id); const r=26;
+  el.style.left=(50 + x*32)+"%";
+  el.style.top=(50 - y*32)+"%";
+}
+let compassBuilt=false;
+function buildCompass(hdg){
+  const track=$("compass-track");
+  if(!compassBuilt){
+    let html="";
+    for(let d=-360; d<=720; d+=15){
+      const dd=((d%360)+360)%360;
+      let label=dd.toString();
+      if(dd===0)label="N";else if(dd===90)label="E";else if(dd===180)label="S";else if(dd===270)label="W";
+      const card=(dd%90===0);
+      html+='<span class="'+(card?"card":"")+'">'+label+'</span>';
+    }
+    track.innerHTML=html; compassBuilt=true;
+  }
+  // each span = 40px = 15deg; ribbon starts at -360deg; centre the needle (170px) on hdg
+  const pxPerDeg=40/15;
+  const startDeg=-360;
+  const x = 170 - ((hdg - startDeg)*pxPerDeg);
+  track.style.transform="translateX("+x+"px)";
+}
+function updateWarnings(){
+  const bar=$("warnbar"); bar.innerHTML="";
+  const add=(txt,amber)=>{const p=document.createElement("div");p.className="warnpill"+(amber?" amber":"");p.textContent=txt;bar.appendChild(p);};
+  if(!state.powered) return;
+  if(state.battery<12) add("⚠ Critical Battery — Land Now");
+  else if(state.battery<25) add("Low Battery — Return Soon", true);
+  if(state.signal<20) add("⚠ Signal Loss Risk");
+  if(state.gps<6) add("Weak GPS — Position Hold Unreliable", true);
+  if(state.windSpeed>2.5) add("High Wind Drift", true);
+  if(Math.abs(state.pitch)>MAX_TILT*0.92||Math.abs(state.roll)>MAX_TILT*0.92) add("Excessive Tilt", true);
+  if(state.rthActive) add("Return-To-Home Active", true);
+  if(Math.hypot(state.pos.x,state.pos.z)>42) add("⚠ Approaching Safety Boundary");
+}
+
+/* ====================== TRACKERS / DETECTORS ====================== */
+function updateTrackers(dt){
+  if(!state.powered) return;
+  track.maxAlt=Math.max(track.maxAlt, alt());
+  track.maxHome=Math.max(track.maxHome, Math.hypot(state.pos.x,state.pos.z));
+  track.maxYawTravel=Math.max(track.maxYawTravel, Math.abs((state.heading-track.startHeading)*DEG));
+  if(state.signal<70) track.sawLowSignal=true;
+  if(state.signal<90 && track.sawLowSignal){} // recovery checked in objective
+  if(state.battery<25) track.sawLowBatt=true;
+  if(state.rthActive) track.sawRTH=true;
+  track.maxAltRef = track.maxAlt;
+  current.maxAlt=track.maxAlt; current.maxHome=track.maxHome; // expose for chk via s
+  // hover hold timer (low speed, airborne)
+  const spd=Math.hypot(state.vel.x,state.vel.z);
+  if(alt()>1 && spd<0.6 && Math.abs(state.vel.y)<0.5) state.hoverHold+=dt; else state.hoverHold=0;
+  // wind hold timer (near pad, airborne, in wind)
+  if(scenario.wind>0 && alt()>1 && Math.hypot(state.pos.x,state.pos.z)<3) state.windHold+=dt; else state.windHold=0;
+
+  // ring detection (cross z-plane within radius, moving forward)
+  ringObjs.forEach(r=>{
+    if(r.userData.passed||!r.visible) return;
+    const rp=r.position;
+    const dx=state.pos.x-rp.x, dy=state.pos.y-rp.y;
+    const within=Math.hypot(dx,dy)<1.4;
+    const crossed=(state.prevPos.z>rp.z && state.pos.z<=rp.z);
+    if(within&&crossed){
+      r.userData.passed=true;
+      r.userData.ring.material.color.setHex(0x54e08a);
+      r.userData.ring.material.emissive.setHex(0x1c5d2e);
+      pushFeed("Ring cleared","Clean pass — you held altitude and centred the aircraft while moving forward. That's coordinated pitch control.","good");
+    }
+  });
+  // yaw marker detection: marker centred ahead (camera/nose aimed at it)
+  yawMarkers.forEach(m=>{
+    if(m.userData.hit||!m.visible) return;
+    const toM=Math.atan2(m.position.x-state.pos.x, -(m.position.z-state.pos.z));
+    const diff=Math.abs(wrap180((toM-state.heading)*DEG));
+    if(diff<12){
+      m.userData.hit=true;
+      m.material.emissive.setHex(0xffffff); m.material.emissiveIntensity=0.8;
+      pushFeed("Marker aligned","Nose is pointed at the target. Yaw changed your <b>facing</b> — your position stayed put.","good");
+    }
+  });
+}
+
+/* ====================== CONTROL ACTIONS ====================== */
+function resetDrone(keepLesson){
+  state.pos.set(0,GROUND_Y,0); state.vel.set(0,0,0);
+  state.heading=0; state.yawRate=0; state.pitch=0; state.roll=0;
+  state.climbInput=0; state.battery=100; state.gps=12; state.signal=100;
+  state.windSpeed=0; state.windDir=0; state.landed=true; state.rthActive=false;
+  state.hardLanding=false; state.smoothness=100; state.hoverHold=0; state.windHold=0;
+  drone.position.copy(state.pos); drone.rotation.set(0,0,0);
+  // reset trackers
+  track.maxAlt=0; track.maxHome=0; track.maxYawTravel=0; track.startHeading=0;
+  track.sawLowSignal=false; track.sawLowBatt=false; track.sawRTH=false;
+  // reset props
+  ringObjs.forEach(r=>{r.userData.passed=false;r.userData.ring.material.color.setHex(0x36e0c8);r.userData.ring.material.emissive.setHex(0x0d3b34);});
+  yawMarkers.forEach(m=>{m.userData.hit=false;m.material.emissive.setHex(m.userData.baseColor);m.material.emissiveIntensity=0.25;});
+  if(!keepLesson){
+    current._complete=false;
+    if(current.objectives) buildObjectives();
+    pushFeed("Aircraft reset","Back on the pad, full battery. Ready when you are.",null);
+  } else {
+    current._complete=false;
+  }
+}
+function toggleHover(){
+  state.hover=!state.hover;
+  pushFeed(state.hover?"Stabilization ON":"Manual mode (stabilization OFF)",
+    state.hover?"The flight controller auto-levels and holds altitude when you release the sticks. Beginner-friendly.":
+    "You now manage lift directly — the aircraft will sink without throttle, like an experienced pilot's rate mode.",
+    state.hover?"good":"warn");
+}
+
+/* ====================== ANATOMY MODE ====================== */
+const anatomy = {
+  body:["Flight Controller","The brain. Reads the IMU and your stick inputs, then decides how fast to spin each motor to achieve the flight you commanded."],
+  batt:["Battery (LiPo)","Stores energy for the motors. Battery isn't just runtime — voltage sag at low charge reduces lift authority and triggers Return-to-Home."],
+  gimbal:["Camera Gimbal","A motorised mount that keeps the camera steady while the aircraft tilts, so footage stays level during pitch and roll."],
+  motor:["Motor + ESC","Each motor is driven by an Electronic Speed Controller. The ESC sets exact RPM so the controller can balance thrust across all four."],
+  prop:["Propeller","Generates thrust. Opposite pairs spin opposite directions so their torque cancels — that balance is what lets the drone hover and yaw."],
+};
+let anatomyMode=false;
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+const tip=document.getElementById("anatomy-tip");
+function enterAnatomy(){
+  anatomyMode=true; state.powered=false;
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("ui").classList.remove("hidden");
+  // hide flight UI bits, show hint
+  loadLesson(lessons[0]);
+  document.getElementById("lesson-eyebrow").textContent="Module 00 · Anatomy";
+  document.getElementById("lesson-title").textContent="Drone Anatomy";
+  document.getElementById("lesson-text").innerHTML="Orbit the aircraft and <b>click its parts</b> to learn what each component does. When you're ready, pick a flight module below to start flying.";
+  document.getElementById("mission-name").textContent="Inspect the aircraft";
+  camMode=1; // orbit
+  // map clickable meshes
+  pushFeed("Anatomy mode","Click the body, battery, a motor, a propeller, or the camera gimbal to inspect it.","good");
+}
+canvas.addEventListener("pointermove",(e)=>{
+  if(!anatomyMode) return;
+  mouse.x=(e.clientX/window.innerWidth)*2-1;
+  mouse.y=-(e.clientY/window.innerHeight)*2+1;
+});
+canvas.addEventListener("click",(e)=>{
+  if(!anatomyMode) return;
+  mouse.x=(e.clientX/window.innerWidth)*2-1;
+  mouse.y=-(e.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(drone.children,true);
+  if(!hits.length){ tip.style.display="none"; return; }
+  let obj=hits[0].object; let kind="body";
+  if(obj===batt) kind="batt";
+  else if(props.some(p=>p===obj||p.children.includes(obj))) kind="prop";
+  else if(gimbal.children.includes(obj)||obj===gimbal||hits[0].object.parent===gball) kind="gimbal";
+  else if(obj.geometry&&obj.geometry.type==="CylinderGeometry"&&obj.material===motorMat) kind="motor";
+  else if(obj===body||obj===bodyTop) kind="body";
+  const info=anatomy[kind]||anatomy.body;
+  tip.innerHTML="<b>"+info[0]+"</b>"+info[1];
+  tip.style.left=Math.min(e.clientX+14,window.innerWidth-260)+"px";
+  tip.style.top=Math.min(e.clientY+14,window.innerHeight-120)+"px";
+  tip.style.display="block";
+  pushFeed(info[0], info[1], null);
+});
+
+/* ====================== START / NAV WIRING ====================== */
+function buildNav(){
+  const nav=document.getElementById("lesson-nav"); nav.innerHTML="";
+  lessons.forEach(les=>{
+    const b=document.createElement("div");
+    b.className="lbtn"+(les.scn?" scn":""); b.textContent=les.name; b.dataset.id=les.id;
+    b.onclick=()=>{ anatomyMode=false; tip.style.display="none"; state.powered=true; if(camMode===1)camMode=0; loadLesson(les); document.getElementById("cam-hint").textContent="CAM: "+camModes[camMode]+"  ·  press C"; };
+    nav.appendChild(b);
+  });
+}
+buildNav();
+
+document.getElementById("launch-btn").onclick=()=>{
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("ui").classList.remove("hidden");
+  anatomyMode=false; state.powered=true; camMode=0;
+  loadLesson(lessons[0]);
+  pushFeed("Systems online","Motors armed, telemetry live. Try W/S/A/D/Q/E and Space/Shift — watch this feed explain each input.","good");
+};
+document.getElementById("anatomy-btn").onclick=enterAnatomy;
+
+/* ====================== MAIN LOOP ====================== */
+let last=performance.now();
+function loop(now){
+  let dt=(now-last)/1000; last=now;
+  dt=Math.min(dt,0.05); // clamp big frames
+  updateFeed();          // edge-triggered explanations
+  updatePhysics(dt);
+  updateAvionics(dt);
+  updateTrackers(dt);
+  checkObjectives();
+  updateVisuals(dt);
+  updateCamera(dt);
+  updateHUD();
+  // clear edges
+  for(const k in keyEdges) keyEdges[k]=false;
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ====================== RESIZE ====================== */
+window.addEventListener("resize",()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+</script>
+</body>
+</html>
+                                                                                       

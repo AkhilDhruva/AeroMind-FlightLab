@@ -1,0 +1,14 @@
+# dependencies / build (for the future React/Vite migration)
+node_modules/
+dist/
+.vite/
+
+# editor / os
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs
+*.log
+npm-debug.log*
