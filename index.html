@@ -219,6 +219,16 @@
   .toggle.on{background:rgba(54,224,200,.3);border-color:var(--cyan)}
   .toggle.on::after{left:22px;background:var(--cyan)}
   input[type=range]{width:130px;accent-color:var(--cyan)}
+
+  /* ---------- controller calibration (live axis bars) ---------- */
+  #ctrl-cal{border-top:1px solid var(--stroke);padding:8px 0 2px}
+  #ctrl-cal .calhead{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:4px}
+  .axrow{display:flex;align-items:center;gap:8px;padding:3px 0;font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .axrow .nm{width:48px;text-transform:uppercase;letter-spacing:1px}
+  .axtrack{flex:1;height:8px;border-radius:5px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}
+  .axtrack::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--stroke-strong)}
+  .axfill{position:absolute;top:0;bottom:0;left:50%;width:0;background:var(--cyan);border-radius:5px;transition:none}
+  .axrow .vv{width:40px;text-align:right;color:var(--muted)}
   .kbd{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
   .kbd div{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--stroke);border-radius:7px;padding:6px 8px}
   .kbd b{color:var(--blue)}
@@ -397,6 +407,14 @@
     <div class="srow"><div class="lbl">Volume</div><input type="range" id="vol" min="0" max="100" value="70"></div>
     <div class="srow"><div class="lbl">Reduced motion<small>Calms UI animation &amp; drone bob</small></div><div class="toggle" id="tg-motion"></div></div>
     <div class="srow"><div class="lbl">Controller<small>Plug in a gamepad to fly</small></div><div class="stat" id="ctrl-status">Not detected</div></div>
+    <div id="ctrl-cal" class="hidden">
+      <div class="calhead">Calibration — live input</div>
+      <div class="axrow"><div class="nm">Thr</div><div class="axtrack"><div class="axfill" id="ax-thr"></div></div><div class="vv" id="ax-thr-v">0.00</div></div>
+      <div class="axrow"><div class="nm">Yaw</div><div class="axtrack"><div class="axfill" id="ax-yaw"></div></div><div class="vv" id="ax-yaw-v">0.00</div></div>
+      <div class="axrow"><div class="nm">Pitch</div><div class="axtrack"><div class="axfill" id="ax-pitch"></div></div><div class="vv" id="ax-pitch-v">0.00</div></div>
+      <div class="axrow"><div class="nm">Roll</div><div class="axtrack"><div class="axfill" id="ax-roll"></div></div><div class="vv" id="ax-roll-v">0.00</div></div>
+      <div class="srow" style="border:none"><div class="lbl">Stick deadzone<small>Raise if the drone creeps with sticks centred</small></div><input type="range" id="dz" min="5" max="30" value="14"></div>
+    </div>
     <div class="srow"><div class="lbl">Camera<small>Cycle with C</small></div><div class="stat" id="cam-status">Chase</div></div>
     <div class="srow"><div class="lbl">Onboarding</div><div class="btn" id="replay-onboard" style="padding:7px 12px;font-size:11px">Replay tips</div></div>
     <div class="btn primary close" id="settings-close">Done</div>
@@ -513,6 +531,7 @@ const keyEdges = {};     // freshly pressed this frame
 const INPUT = { pitch:0, roll:0, yaw:0, thr:0 };
 const prevInput = { pitch:0, roll:0, yaw:0, thr:0 };
 const gpad = { connected:false, index:-1, id:"" };
+let DZ = 0.14;   // gamepad stick deadzone — adjustable in Settings, persisted
 
 /* ====================== THREE SETUP ====================== */
 const canvas = document.getElementById("scene-canvas");
@@ -785,7 +804,7 @@ function computeInput(){
   if(gpad.connected && navigator.getGamepads){
     const gp=navigator.getGamepads()[gpad.index];
     if(gp){
-      const dz=v=>Math.abs(v)<0.14?0:v;
+      const dz=v=>Math.abs(v)<DZ?0:v;
       const lx=dz(gp.axes[0]||0), ly=dz(gp.axes[1]||0);
       const rx=dz(gp.axes[2]||0), ry=dz(gp.axes[3]||0);
       t += -ly; y += lx; p += -ry; r += rx;
@@ -1121,6 +1140,14 @@ const lessons = [
       {t:"Fly out until signal drops below 70%", chk:s=>state.signal<70},
       {t:"Return until signal recovers above 90%", chk:s=>s.sawLowSignal&&state.signal>90} ] },
 
+  { id:"precision", name:"Precision", eyebrow:"Module 07 · Accuracy",
+    title:"Precision Landing",
+    text:"Real operations end on a target, not “somewhere nearby”. Fly out, come back, and put your skids <b>inside the pad ring</b> — gently. Ease the throttle early; the last metre decides the landing.",
+    scenario:{}, objectives:[
+      {t:"Take off and climb above 2 m", chk:s=>alt()>2},
+      {t:"Fly at least 8 m from home", chk:s=>s.maxHome>8},
+      {t:"Land softly within 1.5 m of pad centre", chk:s=>state.landed&&Math.hypot(state.pos.x,state.pos.z)<1.5&&!state.hardLanding&&s.maxHome>8} ] },
+
   { id:"battery", name:"⚠ Low Battery", eyebrow:"Scenario · Emergency", scn:true,
     title:"Failure: Low Battery",
     text:"Battery is draining fast. When it gets critical the aircraft will <b>auto Return-to-Home</b>. Your job: recognise it early, stop the mission, and bring it back before it forces a landing.",
@@ -1143,6 +1170,14 @@ const lessons = [
       {t:"Fly out and let signal degrade", chk:s=>state.signal<40},
       {t:"Observe automatic Return-to-Home engage", chk:s=>state.rthActive||s.sawRTH},
       {t:"Let the failsafe complete the landing", chk:s=>s.sawRTH&&state.landed} ] },
+
+  { id:"gps", name:"⚠ GPS Degraded", eyebrow:"Scenario · Emergency", scn:true,
+    title:"Failure: GPS Degraded",
+    text:"Satellite lock is poor, so the aircraft can't hold position cleanly — it slips into <b>ATTI mode</b> and drifts. Fly small, gentle corrections, keep your circuits short, and get it home early.",
+    scenario:{gpsWeak:true}, objectives:[
+      {t:"Notice the weak-GPS warning (sats < 8)", chk:s=>s.sawWeakGps},
+      {t:"Climb above 1.5 m and hold despite the drift", chk:s=>alt()>1.5&&s.sawWeakGps},
+      {t:"Land back within 3 m of the pad", chk:s=>state.landed&&Math.hypot(state.pos.x,state.pos.z)<3&&s.sawWeakGps&&s.maxAlt>1.5} ] },
 ];
 
 let current = lessons[0];
@@ -1363,6 +1398,7 @@ function updateTrackers(dt){
   track.maxHome=Math.max(track.maxHome, Math.hypot(state.pos.x,state.pos.z));
   track.maxYawTravel=Math.max(track.maxYawTravel, Math.abs((state.heading-track.startHeading)*DEG));
   if(state.signal<70) track.sawLowSignal=true;
+  if(state.gps<8) track.sawWeakGps=true;
   if(state.signal<90 && track.sawLowSignal){} // recovery checked in objective
   if(state.battery<25) track.sawLowBatt=true;
   if(state.rthActive) track.sawRTH=true;
@@ -1415,7 +1451,7 @@ function resetDrone(keepLesson){
   // reset trackers
   track.maxAlt=0; track.maxHome=0; track.maxYawTravel=0; track.startHeading=0;
   track.sawLowSignal=false; track.sawLowBatt=false; track.sawRTH=false;
-  track.collisions=0; collideCooldown=0;
+  track.collisions=0; collideCooldown=0; track.sawWeakGps=false;
   // reset props
   ringObjs.forEach(r=>{r.userData.passed=false;r.userData.ring.material.color.setHex(0x36e0c8);r.userData.ring.material.emissive.setHex(0x0d3b34);});
   yawMarkers.forEach(m=>{m.userData.hit=false;m.material.emissive.setHex(m.userData.baseColor);m.material.emissiveIntensity=0.25;});
@@ -1664,6 +1700,18 @@ function updateControllerStatus(){
   const el=$("ctrl-status"); if(!el) return;
   el.textContent = gpad.connected ? "Connected" : "Not detected";
   el.style.color = gpad.connected ? "var(--green)" : "var(--muted)";
+  const cal=$("ctrl-cal"); if(cal) cal.classList.toggle("hidden", !gpad.connected);
+}
+/* live axis bars in Settings — only while the panel is open and a pad is connected */
+function updateCalibrationUI(){
+  if(!gpad.connected) return;
+  const sheet=$("settings"); if(!sheet || !sheet.classList.contains("show")) return;
+  [["ax-thr",INPUT.thr],["ax-yaw",INPUT.yaw],["ax-pitch",INPUT.pitch],["ax-roll",INPUT.roll]].forEach(([id,v])=>{
+    const f=$(id); if(!f) return;
+    if(v>=0){ f.style.left="50%"; f.style.width=(v*50)+"%"; }
+    else    { f.style.left=(50+v*50)+"%"; f.style.width=(-v*50)+"%"; }
+    const vv=$(id+"-v"); if(vv) vv.textContent=(v>=0?"+":"")+v.toFixed(2);
+  });
 }
 function maybeShowControllerCue(){
   if(cueShown||gpad.connected) return;
@@ -1749,6 +1797,7 @@ $("settings-close").onclick=()=>closeOverlay("settings");
 $("tg-sound").onclick=()=>setMute(Audio.enabled);
 $("tg-motion").onclick=()=>setReduceMotion(!reduceMotion);
 $("vol").oninput=(e)=>{ Audio.setVolume(e.target.value/100); LS.set("aeromind_vol",e.target.value); };
+$("dz").oninput=(e)=>{ DZ=clamp(e.target.value/100,0.05,0.30); LS.set("aeromind_dz",e.target.value); };
 $("replay-onboard").onclick=()=>{ LS.set("aeromind_onboarded","0"); closeOverlay("settings"); maybeOnboard(current); };
 $("onboard-go").onclick=()=>{ if($("ob-skip").checked) LS.set("aeromind_onboarded","1"); closeOverlay("onboard"); };
 // dismiss overlays on backdrop click
@@ -1763,6 +1812,7 @@ window.addEventListener("keydown",(e)=>{
 // restore persisted prefs
 (function restorePrefs(){
   const vol=LS.get("aeromind_vol","70"); $("vol").value=vol; Audio.setVolume(vol/100);
+  const dz=LS.get("aeromind_dz","14"); $("dz").value=dz; DZ=clamp(dz/100,0.05,0.30);
   if(LS.get("aeromind_reduce")==="1") setReduceMotion(true);
   if(LS.get("aeromind_muted")==="1"){ /* defer actual mute until audio context exists */ setMute(true); }
 })();
@@ -1786,6 +1836,7 @@ function loop(now){
   updateHUD();
   Audio.update(dt);      // throttle-linked motor hum
   pollGamepadButtons();  // gamepad face-button shortcuts (reset/camera/mode)
+  updateCalibrationUI(); // live axis bars while Settings is open
   // clear edges
   for(const k in keyEdges) keyEdges[k]=false;
   renderer.render(scene,camera);

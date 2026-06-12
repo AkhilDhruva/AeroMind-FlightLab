@@ -71,6 +71,8 @@ analog input; the keyboard gives full-deflection digital input.
 | Triggers | Fine throttle |
 | A · B · Y / Start | Stabilise toggle · Reset · Cycle camera |
 
+With a controller connected, **Settings (`P`) shows live axis bars and an adjustable stick deadzone** — raise it if the drone creeps with the sticks centred.
+
 Mouse: in **Anatomy** mode, click drone parts to inspect them.
 
 > **Safety failsafe.** When battery gets critical or the control link is lost, the aircraft
@@ -82,7 +84,7 @@ Mouse: in **Anatomy** mode, click drone parts to inspect them.
 
 ## ✦ Training modules
 
-`Anatomy → Throttle → Pitch → Roll → Yaw → Combined Mission → Avionics → Failure Scenarios`
+`Anatomy → Throttle → Pitch → Roll → Yaw → Combined Mission → Avionics → Precision Landing → Failure Scenarios (Low Battery · Wind Drift · Signal Loss · GPS Degraded)`
 
 Each module has a concept card, an auto-detected mission, a stability score, and a debrief. See **[`case-study.md`](case-study.md)** for the product story and **[`docs/AeroMind_Design_and_Case_Study.md`](docs/AeroMind_Design_and_Case_Study.md)** for the full design specification.
 
