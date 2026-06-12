@@ -1603,7 +1603,8 @@ const Audio = (function(){
   return {
     get enabled(){return enabled;},
     init(){ ensure(); if(ctx && ctx.state==="suspended") ctx.resume(); started=true; },
-    resume(){ if(ctx && ctx.state==="suspended") ctx.resume(); },
+    resume(){ if(ctx && ctx.state==="suspended" && enabled) ctx.resume(); },
+    suspend(){ if(ctx && ctx.state==="running") ctx.suspend(); },
     setEnabled(v){ enabled=v; if(master) master.gain.value=v?volume:0; if(!v) stopMotor(); else if(state.powered) startMotor(); },
     setVolume(v){ volume=clamp(v,0,1); if(master&&enabled) master.gain.value=volume; },
     arm(){ if(!ensure()||!enabled) return; startMotor();
@@ -1623,12 +1624,18 @@ const Audio = (function(){
     // per-frame: motor level/pitch + threshold-crossing alert sounds
     update(dt){
       if(running){
+        // idle detection: on the ground, sticks centred, not moving → motors
+        // spool down to silence instead of humming forever on the pad
+        const inputActive = Math.abs(INPUT.thr)>0.05 || Math.abs(INPUT.pitch)>0.05 ||
+                            Math.abs(INPUT.roll)>0.05 || Math.abs(INPUT.yaw)>0.05;
+        const moving = Math.hypot(state.vel.x,state.vel.z)>0.3 || Math.abs(state.vel.y)>0.3;
+        const idle = state.landed && !inputActive && !moving && !state.rthActive;
         const thr=clamp(0.30 + Math.abs(INPUT.thr)*0.5 + Math.abs(state.vel.y)*0.06 + Math.hypot(state.vel.x,state.vel.z)*0.02, 0, 1);
         const airborne = alt()>0.1 ? 1 : 0.6;
-        const tgtGain=(0.05 + thr*0.16)*airborne;
+        const tgtGain = idle ? 0 : (0.05 + thr*0.16)*airborne;
         const tgtFreq=60 + thr*120;
         const t=ctx.currentTime;
-        motorGain.gain.setTargetAtTime(tgtGain,t,0.08);
+        motorGain.gain.setTargetAtTime(tgtGain, t, idle?0.5:0.08);  // slow spool-down, fast response
         oscA.frequency.setTargetAtTime(tgtFreq,t,0.08);
         oscB.frequency.setTargetAtTime(tgtFreq*1.5,t,0.08);
         motorFilter.frequency.setTargetAtTime(420+thr*900,t,0.1);
@@ -1643,6 +1650,12 @@ const Audio = (function(){
     }
   };
 })();
+
+/* silence all audio when the page is hidden or the window loses focus —
+   no humming from a background tab; resumes when the user comes back */
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) Audio.suspend(); else Audio.resume(); });
+window.addEventListener("blur",()=>Audio.suspend());
+window.addEventListener("focus",()=>{ if(!document.hidden) Audio.resume(); });
 
 /* ====================== DRONE PRESENCE & ROTOR WASH ====================== */
 // rim glow under the body for separation from the ground
