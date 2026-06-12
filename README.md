@@ -35,10 +35,18 @@ npx serve .
 | Safety-first behavior | Forgiving stabilised flight; smoothness is scored, not speed |
 | Scenario-based learning | Low battery, wind drift, signal loss, Return-to-Home |
 | Mistake feedback & assessment | Auto-detected objectives, stability score, letter-grade debrief |
+| Procedural audio | Throttle-linked motor bed, arming, ring/objective chimes, low-battery & RTH alerts — all Web Audio, no assets |
+| Controller support | Gamepad auto-detected; analog sticks map to a real transmitter layout, keyboard always works |
+| Premium feel | Boot/arming sequence, hover bob, rotor wash, rim lighting, animated objective completions |
+| Comfort & access | Mute, volume, reduced-motion toggle, replayable onboarding, full keyboard help — preferences persist |
 
 ---
 
 ## ✦ Controls
+
+Both keyboard and gamepad work simultaneously. A connected controller maps to a real
+transmitter layout (left stick = throttle/yaw, right stick = pitch/roll) and gives smooth
+analog input; the keyboard gives full-deflection digital input.
 
 | Key | Action | Behavior |
 |---|---|---|
@@ -49,8 +57,24 @@ npx serve .
 | `H` | Mode | Toggle stabilisation vs. manual |
 | `R` | Reset | Return to pad, full battery |
 | `C` | Camera | Chase → orbit → top-down |
+| `M` | Mute | Toggle all sound |
+| `?` | Help | Controls & telemetry overlay |
+| `P` | Settings | Sound, volume, reduced motion, onboarding |
+| `Esc` | Close | Dismiss any open overlay |
+
+| Gamepad | Action |
+|---|---|
+| Left stick | Throttle (Y) · Yaw (X) |
+| Right stick | Pitch (Y) · Roll (X) |
+| Triggers | Fine throttle |
+| A · B · Y / Start | Stabilise toggle · Reset · Cycle camera |
 
 Mouse: in **Anatomy** mode, click drone parts to inspect them.
+
+> **Safety failsafe.** When battery gets critical or the control link is lost, the aircraft
+> sounds an alert and **automatically engages Return-to-Home**, flying itself back to the
+> launch pad and landing — pilot input is locked out so the failsafe can finish, exactly as
+> on real hardware.
 
 ---
 
